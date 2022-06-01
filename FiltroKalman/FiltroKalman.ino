@@ -13,6 +13,8 @@ float AcX[2], AcY[2],AcZ[2], Tmp, GyX[2],GyY[2],GyZ[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy
 unsigned long currentTime=0,previousTime=0;
 float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,ang_accelXY,vang_gyroZ,ang_kalmanXY;
 float y_pass_alt[3][3], x_pass_alt[3][3];
+float movAvg[10];
+int count0 = 0,countMvAvg=0;
 Kalman FiltroKalmanXZ;
 Kalman FiltroKalmanYZ;
 Kalman FiltroKalmanXY;
@@ -51,6 +53,30 @@ float LPFilterAlternative(float x, int axis)
 
 }
 
+float movingAvgFilter(float x)
+{
+  float avg=0;
+  if(countMvAvg<10)
+  {
+    movAvg[countMvAvg]=x;
+    return x;
+  }
+  else
+  {
+    for(int i = 0 ; i<10-1; i++)
+    {
+      movAvg[i]=movAvg[i+1];
+    }
+    movAvg[9]=x;
+    for(int i = 0 ; i<10-1; i++)
+    {
+      avg=movAvg[i]/10;
+    }
+    return avg;
+  }
+  countMvAvg++;
+}
+
 void setup() {
   Serial.begin(115200);
   
@@ -85,15 +111,22 @@ void loop() {
     vang_gyroX=rawGyro.XAxis;
     ang_accelXY = atan2(rawAccel.XAxis, rawAccel.YAxis)*180/PI;
     vang_gyroZ=rawGyro.ZAxis;
+    
     // Aplica o filtro de Kalman
     ang_kalmanXZ = FiltroKalmanXZ.getAngle(ang_accelXZ,vang_gyroY,T);
     ang_kalmanYZ = FiltroKalmanYZ.getAngle(ang_accelYZ,vang_gyroX,T);
     ang_kalmanXY = FiltroKalmanXY.getAngle(ang_accelXY,vang_gyroZ,T);
     // Serial.print(rawAccel.YAxis);Serial.print(",");
     // Serial.println(rawAccel.YAxis - sin(ang_kalmanYZ*PI/180));
-    AcX[1]=LPFilterAlternative(rawAccel.XAxis,0);
-    Serial.print(rawAccel.XAxis);Serial.print(",");
-    Serial.println(AcX[1]);
+    //AcX[1]=LPFilterAlternative(rawAccel.XAxis,0) - sin(ang_kalmanXZ*PI/180);
+    AcX[1]=rawAccel.XAxis - sin(ang_kalmanXZ*PI/180);
+    AcX[1]*=9.807;
+    velocity((AcX),&Vx[1],&count0);
+    displacement(Vx,&Dx);
+    Serial.print(AcX[1]);Serial.print(",");
+    Serial.print(Vx[1]);Serial.print(",");
+    Serial.println(Dx);
+    Vx[0]=Vx[1];
     AcX[0]=AcX[1];
     
   }
@@ -110,7 +143,39 @@ void fitData()
     accel_fit(&rawAccel.YAxis,1);
     rawAccel.ZAxis=rawAccel.ZAxis/16384;
     accel_fit(&rawAccel.ZAxis,2);
+    
     rawGyro.XAxis=rawGyro.XAxis/131;
     rawGyro.YAxis=rawGyro.YAxis/131;
     rawGyro.ZAxis=rawGyro.ZAxis/131;
+}
+
+
+void velocity(float *Ac,float *velo,int *count0)
+{ 
+      if(abs(Ac[1])>0.03*9.807)
+      {
+        *velo=*velo + Ac[1]*0.005;
+       
+        
+      }      
+      else
+      {
+        
+        *count0=*count0+1;
+       
+        if(*count0>1000)
+        {
+          *velo=0;
+          
+          *count0=0;
+        }
+      }
+}
+void displacement(float *velo,float *dis)
+{ 
+      if(abs(velo[1])>0.00)
+      {
+        *dis=*dis +velo[1]*0.005;
+      }  
+  
 }
