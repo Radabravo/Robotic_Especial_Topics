@@ -15,6 +15,7 @@ float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,an
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 int count0 = 0,countMvAvg=0;
+bool isFirst, dir;
 Kalman FiltroKalmanXZ;
 Kalman FiltroKalmanYZ;
 Kalman FiltroKalmanXY;
@@ -195,35 +196,23 @@ void velocity(float *Ac,float *velo,int *count0)
       {
       
         if(*velo==0)
-        {         
+        {
+          if(isFirst&&Ac[1]<0)dir=false;
+          if(isFirst&&Ac[1]>0)dir=true;         
           *velo=*velo + Ac[1]*T;
+          isFirst=false;
         }
-        if(*velo>0)
+       
+        if(abs(*velo+Ac[1]*T)<=0)
         {
-           
-           if(*velo+Ac[1]*T<0)
-           {
-             *velo=0;
-           }    
-           else
-           {
-             *velo=*velo + Ac[1]*T;
-           }    
-        }
-        if(*velo<0)
+         *velo=0;
+        }    
+        else
         {
-           
-           if(*velo+Ac[1]*T>0)
-           {
-             
-             *velo=0;
-           }    
-           else
-           {
-            
-             *velo=*velo + Ac[1]*T;
-           }    
-        }
+         *velo=*velo + Ac[1]*T;
+        } 
+  
+      
         
        
         
@@ -235,6 +224,7 @@ void velocity(float *Ac,float *velo,int *count0)
        
         if(*count0>10)
         {
+          isFirst=true;
           *velo=0;
           
           *count0=0;
@@ -245,7 +235,9 @@ void displacement(float *velo,float *dis)
 { 
       if(abs(velo[1])>0.00)
       {
-        *dis=*dis +abs(velo[1])*T;
+        if(dir)*dis=*dis +abs(velo[1])*T;
+        else *dis=*dis -abs(velo[1])*T;
+        
       }  
   
 }
