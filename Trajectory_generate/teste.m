@@ -1,7 +1,5 @@
-%%% Geração de trajetórias %%%
-clear;
 %% Linear com velocidade constante
-dx=[];dy=[];dtheta=[];dphi=[];phi=[];v=[];theta=[];
+dx=[];dy=[];dtheta=[];dphi=[];phi=[];v=[];
 
 % Tempo amostrado de 1ms
 interval=0.001;
@@ -33,30 +31,29 @@ x = K1*t;
 % Dado uma inclinação da reta dada por um a=k2;
 K2 = 0.25;
 y=K2*x.^2;
-
-
-
-%Rotina para achar as velocidades de cada eixo
-for i=1:length(x)-1      
-    dy(end+1)=(y(i+1)-y(i))/interval;
-    dx(end+1)=(x(i+1)-x(i))/interval;
-
-    %Dado que pela equação da restrição theta = dy*cos(theta)-dx*sin(theta)
-    %temos theta = arctg(dy/dx)
-    theta(end+1) = atan(dy(i)/dx(i));
-    v(end+1)=dx(i).*(cos(theta(i))^-1);
+dy=K2*K1*t;
+for i=1:length(x)-1
+    dx(end+1)=K1;
 end
-for i=1:length(theta)-1
-    dtheta(end+1)=(theta(i+1)-theta(i))/interval;     
-    dphi(end+1)=atan((dtheta(i)*(wheelbase)/v(i)));
-end
-for i=1:length(phi)-1
-%     dphi(end+1)=(phi(i+1)-phi(i))/interval;
-end      
+theta=atan(0.25*t);
+v=0.5.*((cos(theta)).^-1);
 
-theta0=theta(1);
+phi=[];
+dphi=[];
+for i=1:length(x)-1
+   dtheta(end+1) = 0.25/(1+(0.25*t(i))^2);
+   x=(dtheta(i)*wheelbase/v(i));
+   phi(end+1)=atan(x);
+   
+   dphi(end+1)=-(0.03125*wheelbase*v(i)*t(i))/(0.0625*wheelbase^2+v(i)^2*(0.0625*t(i)^2+1)^2);
+   
+end
+
+
 %Posição inicial do carro
-initState=[0,0,theta0,0];
+initState=[0,0,theta(1),0];
+
+
 
 
 
@@ -64,7 +61,7 @@ initState=[0,0,theta0,0];
 %%Plot 3d simulation
 
 
-iteractions=length(dphi);
+iteractions=length(phi);
 startLoc=[x(1),y(1)];
 goalLoc=[x(end),y(end)];
 load exampleMaps.mat
