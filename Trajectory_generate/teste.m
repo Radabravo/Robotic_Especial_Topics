@@ -42,8 +42,8 @@ phi=[];
 dphi=[];
 for i=1:length(x)-1
    dtheta(end+1) = 0.25/(1+(0.25*t(i))^2);
-   x=(dtheta(i)*wheelbase/v(i));
-   phi(end+1)=atan(x);
+   aux=(dtheta(i)*wheelbase/v(i));
+   phi(end+1)=atan(aux);
    
    dphi(end+1)=-(0.03125*wheelbase*v(i)*t(i))/(0.0625*wheelbase^2+v(i)^2*(0.0625*t(i)^2+1)^2);
    

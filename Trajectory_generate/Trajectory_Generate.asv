@@ -8,25 +8,25 @@ clear;close all;
 % comportamento de cada trecho da geração de trajetórias para uma parabola.
 
 %Variáveis para manipulações computacionbais:
-dx=[];dy=[];dtheta=[];dphi=[];phi=[];v=[];theta=[];
+dx=[];dy=[];dtheta=[];dphi=[];phi=[];v=[];theta=[];dphi=[];
 
 %Variáveis para utilizando as derivadas literais:
-dx2=[];dy2=[];dtheta2=[];dphi2=[];phi2=[];v2=[];theta2=[];
+dx2=[];dy2=[];dtheta2=[];dphi2=[];phi2=[];v2=[];theta2=[];dphi2=[];
 
 
 % Tempo amostrado de 1ms
-interval=0.001;
+interval=0.000001;
 % Para um percurso de 10 segundos
-t = 0:interval:100;
+t = 0:interval:10;
 
 %Dados do carro
 wheelbase=0.13;
 
 % Dado uma velocidade K1
-K1 = 1;
+K1 = 0.5;
 x = K1*t; 
 % Dado uma inclinação da reta dada por um a=k2;
-K2 = 1;
+K2 = 0.25;
 y=K2*x.^2;
 
 figure ('Name','Positions');
@@ -103,7 +103,7 @@ title('Literal form: Vlinear')
 % Forma numérica 
 for i=1:length(theta)-1
     dtheta(end+1)=(theta(i+1)-theta(i))/interval;     
-    phi(end+1)=atan((dtheta(i)*(wheelbase)/v(i)));
+    phi(end+1)=round(atan((dtheta(i)*(wheelbase)/v(i))),3);
 end
 % Forma literal
 for i=1:length(x)-1
@@ -113,7 +113,7 @@ for i=1:length(x)-1
 end
 
 t(end)=[];
-dtheta2(end)=[];phi2(end)=[];
+
 
 figure('Name',' dTheta and Phi');
 subplot(2,2,1)
@@ -139,7 +139,6 @@ for i=1:length(phi)-1
     dphi2(end+1)=-(0.03125*wheelbase*v(i)*t(i))/(0.0625*wheelbase^2+v(i)^2*(0.0625*t(i)^2+1)^2);   
 end
 
-t(end)=[];
 figure('Name',' dPhi');
 subplot(2,1,1)
 plot(t,dphi)
