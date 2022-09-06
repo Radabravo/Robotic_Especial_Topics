@@ -1,7 +1,7 @@
 %%% Geração de trajetórias
 clear;close all;
 
-%% Trajetória curva com velocidade constante
+%% Trajetória em linha reta com velocidade constante
 % Este scrip trata-se de testes utilizando as euqações do modelo matemático
 % do veículo, iremos realizar um paralelo utilizando as derivadas de forma
 % computacional e literais. Temos como objetivo tentar entender o
@@ -14,8 +14,7 @@ clear;close all;
 interval=0.001;
 % Para um percurso de 5 segundos
 t = 0:interval:5;
-%Com um raio de 1m
-r=5;
+
 %Variáveis para manipulações computacionbais:
 x=zeros([1 length(t)]);y=zeros([1 length(t)]);dx=zeros([1 length(t)]);dy=zeros([1 length(t)]);dtheta=zeros([1 length(t)]);dphi=zeros([1 length(t)]);phi=zeros([1 length(t)]);v=zeros([1 length(t)]);theta=zeros([1 length(t)]);
 
@@ -24,17 +23,15 @@ dx2=zeros([1 length(t)]);dy2=zeros([1 length(t)]);dtheta2=zeros([1 length(t)]);d
 %Dados do carro
 wheelbase=0.13;
 
-% Dado uma velocidade vlinear, constante para 5 segundos em uma curva de
-% 1/4 de circunferência
-vlinear=2*pi*r/(4*t(end));
+% Dado uma velocidade vlinear, constante para 5 segundos em uma reta de 5
+% metros
+vlinear=5/t(end);
 %temos o vetor de velocidades
 for i = 1:length(t)
     v(i)=vlinear;
 end
-%Temos a velocidade angular dada por v/r
-w=v.*(r^-1);
-dtheta = w ;
-%dtheta = cte = w -> theta(t)=theta(-1)*w
+
+%Temos a velocidade angular dada por 0
 theta(1)=0;
 for i = 2:length(t)
     theta(i)=theta(i-1)+dtheta(i)*(t(i)-t(i-1));
@@ -44,6 +41,7 @@ for i = 1:length(t)
     dy(i)=v(i)*sin(theta(i));
     dx(i)=v(i)*cos(theta(i));
 end
+y(1)=4;
 for i = 2:length(t)
     y(i)=y(i-1)+dy(i)*(t(i)-t(i-1));
     x(i)=x(i-1)+dx(i)*(t(i)-t(i-1));
@@ -57,7 +55,8 @@ for i=1:length(theta)-1
 end
 
 
-initState=[0,0,theta(1),phi(1)];
+%A direção do carrinho depende do seu estado inicial
+initState=[x(1),y(1),theta(1),phi(1)];
 
 %%Plot 3d simulation
 

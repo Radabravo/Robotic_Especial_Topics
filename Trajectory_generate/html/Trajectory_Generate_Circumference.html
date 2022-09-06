@@ -1,0 +1,279 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Trajectory_Generate_Circumference</title><meta name="generator" content="MATLAB 9.12"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-09-06"><meta name="DC.source" content="Trajectory_Generate_Circumference.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1></h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Gera&ccedil;&atilde;o de trajet&oacute;rias</a></li><li><a href="#2">Trajet&oacute;ria curva com velocidade constante</a></li></ul></div><h2 id="1">Gera&ccedil;&atilde;o de trajet&oacute;rias</h2><pre class="codeinput">clear;close <span class="string">all</span>;
+</pre><h2 id="2">Trajet&oacute;ria curva com velocidade constante</h2><p>Este scrip trata-se de testes utilizando as euqa&ccedil;&otilde;es do modelo matem&aacute;tico do ve&iacute;culo, iremos realizar um paralelo utilizando as derivadas de forma computacional e literais. Temos como objetivo tentar entender o comportamento de cada trecho da gera&ccedil;&atilde;o de trajet&oacute;rias para uma parabola.</p><pre class="codeinput"><span class="comment">% Tempo amostrado de 1ms</span>
+interval=0.001;
+<span class="comment">% Para um percurso de 5 segundos</span>
+t = 0:interval:5;
+<span class="comment">%Com um raio de 1m</span>
+r=5;
+<span class="comment">%Vari&aacute;veis para manipula&ccedil;&otilde;es computacionbais:</span>
+x=zeros([1 length(t)]);y=zeros([1 length(t)]);dx=zeros([1 length(t)]);dy=zeros([1 length(t)]);dtheta=zeros([1 length(t)]);dphi=zeros([1 length(t)]);phi=zeros([1 length(t)]);v=zeros([1 length(t)]);theta=zeros([1 length(t)]);
+
+<span class="comment">%Vari&aacute;veis para utilizando as derivadas literais:</span>
+dx2=zeros([1 length(t)]);dy2=zeros([1 length(t)]);dtheta2=zeros([1 length(t)]);dphi2=zeros([1 length(t)]);phi2=zeros([1 length(t)]);v2=zeros([1 length(t)]);theta2=zeros([1 length(t)]);
+<span class="comment">%Dados do carro</span>
+wheelbase=0.13;
+
+<span class="comment">% Dado uma velocidade vlinear, constante para 5 segundos em uma curva de</span>
+<span class="comment">% 1/4 de circunfer&ecirc;ncia</span>
+vlinear=2*pi*r/(4*t(end));
+<span class="comment">%temos o vetor de velocidades</span>
+<span class="keyword">for</span> i = 1:length(t)
+    v(i)=vlinear;
+<span class="keyword">end</span>
+<span class="comment">%Temos a velocidade angular dada por v/r</span>
+w=v.*(r^-1);
+dtheta = w ;
+
+
+<span class="comment">%dtheta = cte = w -&gt; theta(t)=theta(-1)*w</span>
+<span class="keyword">for</span> i = 2:length(t)
+    theta(i)=theta(i-1)+w(i)*(t(i)-t(i-1));
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i = 1:length(t)
+    dy(i)=v(i)*sin(theta(i));
+    dx(i)=v(i)*cos(theta(i));
+<span class="keyword">end</span>
+<span class="keyword">for</span> i = 2:length(t)
+    y(i)=y(i-1)+dy(i)*(t(i)-t(i-1));
+    x(i)=x(i-1)+dx(i)*(t(i)-t(i-1));
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> i=1:length(theta)
+    phi(i)=atan((dtheta(i)*(wheelbase)/v(i)));
+<span class="keyword">end</span>
+<span class="keyword">for</span> i=1:length(theta)-1
+    dphi(i)=(phi(i+1)-phi(i))/interval;
+<span class="keyword">end</span>
+
+
+initState=[0,0,theta(1),phi(1)];
+
+<span class="comment">%%Plot 3d simulation</span>
+
+
+iteractions=length(phi);
+startLoc=[x(1),y(1)];
+goalLoc=[x(end),y(end)];
+load <span class="string">exampleMaps.mat</span>
+<span class="comment">%open_system('pathPlanningBicycleSimulinkModel.slx')</span>
+map = binaryOccupancyMap(emptyMap);
+simulation = sim(<span class="string">'pathPlanningTest.slx'</span>,t(end));
+robotPose = simulation.CarPose;
+numRobots = size(robotPose, 2) / 3;
+thetaIdx = 3;
+
+<span class="comment">% Translation</span>
+xyz = robotPose;
+xyz(:, thetaIdx) = 0;
+
+<span class="comment">% Rotation in XYZ euler angles</span>
+theta1 = robotPose(:,thetaIdx);
+thetaEuler = zeros(size(robotPose, 1), 3 * size(theta1, 2));
+thetaEuler(:, end) = theta1;
+
+<span class="keyword">for</span> k = 1:size(xyz, 1)
+    show(map)
+    hold <span class="string">on</span>;
+
+    <span class="comment">% Plot Start Location</span>
+    plotTransforms([startLoc, 0], eul2quat([0, 0, 0]))
+    text(startLoc(1), startLoc(2), 2, <span class="string">'Start'</span>);
+
+    <span class="comment">% Plot Goal Location</span>
+    plotTransforms([goalLoc, 0], eul2quat([0, 0, 0]))
+    text(goalLoc(1), goalLoc(2), 2, <span class="string">'Goal'</span>);
+
+    <span class="comment">% Plot Robot's XY locations</span>
+    plot(robotPose(:, 1), robotPose(:, 2), <span class="string">'-b'</span>)
+
+    <span class="comment">% Plot Robot's pose as it traverses the path</span>
+    quat = eul2quat(thetaEuler(k, :), <span class="string">'xyz'</span>);
+    plotTransforms(xyz(k,:), quat, <span class="string">'MeshFilePath'</span>,<span class="keyword">...</span>
+        <span class="string">'groundvehicle.stl'</span>);
+
+    pause(0.01)
+    hold <span class="string">off</span>;
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="Trajectory_Generate_Circumference_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2022a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%%% Geração de trajetórias
+clear;close all;
+
+%% Trajetória curva com velocidade constante
+% Este scrip trata-se de testes utilizando as euqações do modelo matemático
+% do veículo, iremos realizar um paralelo utilizando as derivadas de forma
+% computacional e literais. Temos como objetivo tentar entender o
+% comportamento de cada trecho da geração de trajetórias para uma parabola.
+
+
+
+
+% Tempo amostrado de 1ms
+interval=0.001;
+% Para um percurso de 5 segundos
+t = 0:interval:5;
+%Com um raio de 1m
+r=5;
+%Variáveis para manipulações computacionbais:
+x=zeros([1 length(t)]);y=zeros([1 length(t)]);dx=zeros([1 length(t)]);dy=zeros([1 length(t)]);dtheta=zeros([1 length(t)]);dphi=zeros([1 length(t)]);phi=zeros([1 length(t)]);v=zeros([1 length(t)]);theta=zeros([1 length(t)]);
+
+%Variáveis para utilizando as derivadas literais:
+dx2=zeros([1 length(t)]);dy2=zeros([1 length(t)]);dtheta2=zeros([1 length(t)]);dphi2=zeros([1 length(t)]);phi2=zeros([1 length(t)]);v2=zeros([1 length(t)]);theta2=zeros([1 length(t)]);
+%Dados do carro
+wheelbase=0.13;
+
+% Dado uma velocidade vlinear, constante para 5 segundos em uma curva de
+% 1/4 de circunferência
+vlinear=2*pi*r/(4*t(end));
+%temos o vetor de velocidades
+for i = 1:length(t)
+    v(i)=vlinear;
+end
+%Temos a velocidade angular dada por v/r
+w=v.*(r^-1);
+dtheta = w ;
+
+
+%dtheta = cte = w -> theta(t)=theta(-1)*w
+for i = 2:length(t)
+    theta(i)=theta(i-1)+w(i)*(t(i)-t(i-1));
+end
+
+for i = 1:length(t)
+    dy(i)=v(i)*sin(theta(i));
+    dx(i)=v(i)*cos(theta(i));
+end
+for i = 2:length(t)
+    y(i)=y(i-1)+dy(i)*(t(i)-t(i-1));
+    x(i)=x(i-1)+dx(i)*(t(i)-t(i-1));
+end
+
+for i=1:length(theta)      
+    phi(i)=atan((dtheta(i)*(wheelbase)/v(i)));
+end
+for i=1:length(theta)-1     
+    dphi(i)=(phi(i+1)-phi(i))/interval; 
+end
+
+
+initState=[0,0,theta(1),phi(1)];
+
+%%Plot 3d simulation
+
+
+iteractions=length(phi);
+startLoc=[x(1),y(1)];
+goalLoc=[x(end),y(end)];
+load exampleMaps.mat
+%open_system('pathPlanningBicycleSimulinkModel.slx')
+map = binaryOccupancyMap(emptyMap);
+simulation = sim('pathPlanningTest.slx',t(end));
+robotPose = simulation.CarPose;
+numRobots = size(robotPose, 2) / 3;
+thetaIdx = 3;
+
+% Translation
+xyz = robotPose;
+xyz(:, thetaIdx) = 0;
+
+% Rotation in XYZ euler angles
+theta1 = robotPose(:,thetaIdx);
+thetaEuler = zeros(size(robotPose, 1), 3 * size(theta1, 2));
+thetaEuler(:, end) = theta1;
+
+for k = 1:size(xyz, 1)
+    show(map)
+    hold on;
+    
+    % Plot Start Location
+    plotTransforms([startLoc, 0], eul2quat([0, 0, 0]))
+    text(startLoc(1), startLoc(2), 2, 'Start');
+    
+    % Plot Goal Location
+    plotTransforms([goalLoc, 0], eul2quat([0, 0, 0]))
+    text(goalLoc(1), goalLoc(2), 2, 'Goal');
+    
+    % Plot Robot's XY locations
+    plot(robotPose(:, 1), robotPose(:, 2), '-b')
+    
+    % Plot Robot's pose as it traverses the path
+    quat = eul2quat(thetaEuler(k, :), 'xyz');
+    plotTransforms(xyz(k,:), quat, 'MeshFilePath',...
+        'groundvehicle.stl');
+    
+    pause(0.01)
+    hold off;
+end
+
+##### SOURCE END #####
+--></body></html>
