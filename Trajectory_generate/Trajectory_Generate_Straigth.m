@@ -23,6 +23,8 @@ dx2=zeros([1 length(t)]);dy2=zeros([1 length(t)]);dtheta2=zeros([1 length(t)]);d
 %Dados do carro
 wheelbase=0.13;
 
+%Parametros inicias do carro
+y(1)=4;x(1)=0;theta(1)=0;phi(1)=0;
 % Dado uma velocidade vlinear, constante para 5 segundos em uma reta de 5
 % metros
 vlinear=5/t(end);
@@ -31,8 +33,8 @@ for i = 1:length(t)
     v(i)=vlinear;
 end
 
-%Temos a velocidade angular dada por 0
-theta(1)=0;
+%Temos a velocidade angular dada por 0 dtheta=0
+
 for i = 2:length(t)
     theta(i)=theta(i-1)+dtheta(i)*(t(i)-t(i-1));
 end
@@ -41,13 +43,13 @@ for i = 1:length(t)
     dy(i)=v(i)*sin(theta(i));
     dx(i)=v(i)*cos(theta(i));
 end
-y(1)=4;
+
 for i = 2:length(t)
     y(i)=y(i-1)+dy(i)*(t(i)-t(i-1));
     x(i)=x(i-1)+dx(i)*(t(i)-t(i-1));
 end
 
-for i=1:length(theta)      
+for i=2:length(theta)      
     phi(i)=atan((dtheta(i)*(wheelbase)/v(i)));
 end
 for i=1:length(theta)-1     
