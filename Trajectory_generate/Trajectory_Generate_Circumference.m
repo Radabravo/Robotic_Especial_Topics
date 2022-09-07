@@ -19,8 +19,6 @@ r=5;
 %Variáveis para manipulações computacionbais:
 x=zeros([1 length(t)]);y=zeros([1 length(t)]);dx=zeros([1 length(t)]);dy=zeros([1 length(t)]);dtheta=zeros([1 length(t)]);dphi=zeros([1 length(t)]);phi=zeros([1 length(t)]);v=zeros([1 length(t)]);theta=zeros([1 length(t)]);
 
-%Variáveis para utilizando as derivadas literais:
-dx2=zeros([1 length(t)]);dy2=zeros([1 length(t)]);dtheta2=zeros([1 length(t)]);dphi2=zeros([1 length(t)]);phi2=zeros([1 length(t)]);v2=zeros([1 length(t)]);theta2=zeros([1 length(t)]);
 %Dados do carro
 wheelbase=0.13;
 
