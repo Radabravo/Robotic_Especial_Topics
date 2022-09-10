@@ -56,7 +56,8 @@ end
 for i=1:length(theta)      
     phi(i)=atan((dtheta(i)*(wheelbase)/v(i)));
 end
-for i=1:length(theta)-1     
+phi(1)=[];
+for i=1:length(phi)-1     
     dphi(i)=(phi(i+1)-phi(i))/interval; 
 end
 
@@ -66,7 +67,7 @@ initState=[x(1),y(1),theta(1),phi(1)];
 %%Plot 3d simulation
 
 
-iteractions=length(phi);
+iteractions=length(phi)-1;
 startLoc=[x(1),y(1)];
 goalLoc=[x(end),y(end)];
 load exampleMaps.mat
