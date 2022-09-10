@@ -25,9 +25,15 @@ wheelbase=0.13;
 % Dado uma velocidade vlinear, constante para 5 segundos em uma curva de
 % 1/4 de circunferência
 vlinear=2*pi*r/(4*t(end));
+
 %temos o vetor de velocidades
+% for i = 1:length(t)
+%     v(i)=vlinear;
+% end
+v_scurve=s_curve_profile(5,0.001,0.1,0.25,vlinear);
+
 for i = 1:length(t)
-    v(i)=vlinear;
+    v(i)=v_scurve(i);
 end
 %Temos a velocidade angular dada por v/r
 w=v.*(r^-1);
@@ -55,7 +61,7 @@ for i=1:length(theta)-1
 end
 
 
-initState=[0,0,theta(1),phi(1)];
+initState=[x(1),y(1),theta(1),phi(1)];
 
 %%Plot 3d simulation
 
@@ -66,7 +72,7 @@ goalLoc=[x(end),y(end)];
 load exampleMaps.mat
 %open_system('pathPlanningBicycleSimulinkModel.slx')
 map = binaryOccupancyMap(emptyMap);
-simulation = sim('pathPlanningTest.slx',t(end));
+simulation = sim('pathPlanningTest.slx');
 robotPose = simulation.CarPose;
 numRobots = size(robotPose, 2) / 3;
 thetaIdx = 3;
@@ -80,7 +86,7 @@ theta1 = robotPose(:,thetaIdx);
 thetaEuler = zeros(size(robotPose, 1), 3 * size(theta1, 2));
 thetaEuler(:, end) = theta1;
 
-for k = 1:size(xyz, 1)
+for k = 1:100:size(xyz, 1)
     show(map)
     hold on;
     
@@ -100,6 +106,6 @@ for k = 1:size(xyz, 1)
     plotTransforms(xyz(k,:), quat, 'MeshFilePath',...
         'groundvehicle.stl');
     
-    pause(0.01)
+    pause(0.001)
     hold off;
 end

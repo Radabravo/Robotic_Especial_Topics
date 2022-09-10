@@ -27,14 +27,14 @@ y(1)=4;x(1)=0;theta(1)=0;phi(1)=0;
 % metros
 vlinear=5/t(end);
 %temos o vetor de velocidades
-% for i = 1:length(t)
-%     v(i)=vlinear*t(i)*0.1;
-% end
-v_scurve=s_curve_profile(5,0.001,0.1,0.25,vlinear);
-
 for i = 1:length(t)
-    v(i)=v_scurve(i);
+    v(i)=vlinear;
 end
+% v_scurve=s_curve_profile(5,0.001,0.1,0.25,vlinear);
+
+% for i = 1:length(t)
+%     v(i)=v_scurve(i);
+% end
 %Temos a velocidade angular dada por 0 dtheta=0
 
 for i = 2:length(t)
@@ -65,13 +65,13 @@ initState=[x(1),y(1),theta(1),phi(1)];
 %%Plot 3d simulation
 
 
-iteractions=length(phi);
+iteractions=length(dphi)-1;
 startLoc=[x(1),y(1)];
 goalLoc=[x(end),y(end)];
 load exampleMaps.mat
 %open_system('pathPlanningBicycleSimulinkModel.slx')
 map = binaryOccupancyMap(emptyMap);
-simulation = sim('pathPlanningTest.slx',t(end));
+simulation = sim('pathPlanningTest.slx');
 robotPose = simulation.CarPose;
 numRobots = size(robotPose, 2) / 3;
 thetaIdx = 3;

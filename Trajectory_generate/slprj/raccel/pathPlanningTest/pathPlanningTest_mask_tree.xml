@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MF0 version="1.1" packageUris="http://schema.mathworks.com/mf0/SlsaMaskTree/R2020a">
+  <slsa.mm.maskTree.MaskTree type="slsa.mm.maskTree.MaskTree" uuid="9da1aafa-9631-48aa-8e1d-aa04f5442bfb">
+    <maskedBlocks type="slsa.mm.maskTree.MaskedBlock" uuid="2df9d051-497e-48f4-8acb-dd486b1ed6c2">
+      <blockPath>pathPlanningTest/Ackermann Kinematic Model</blockPath>
+      <childrenIds>pathPlanningTest:413:85</childrenIds>
+      <id>pathPlanningTest:413</id>
+      <masks type="slsa.mm.maskTree.Mask" uuid="f3d35edd-5389-42f0-af21-20bd8ea6ca81">
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="81399a60-f1e6-45fc-b56a-19783a21f5d2">
+          <evaluate>true</evaluate>
+          <expression>wheelbase</expression>
+          <isTunable>true</isTunable>
+          <name>WheelBase</name>
+          <referencedVariables type="slsa.mm.maskTree.Variable" uuid="009d75f1-5ef6-4cb3-a432-e9c246ef258c">
+            <name>wheelbase</name>
+            <value></value>
+            <workspace>global-workspace</workspace>
+          </referencedVariables>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="5bc3b3b8-9890-4633-934d-69dc9da0cf5f">
+          <evaluate>true</evaluate>
+          <expression>[-inf inf]</expression>
+          <isTunable>true</isTunable>
+          <name>VehicleSpeedRange</name>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="46a3e933-cf12-4e51-92ad-0edb589d3527">
+          <evaluate>true</evaluate>
+          <expression>pi/4</expression>
+          <isTunable>true</isTunable>
+          <name>MaxSteeringAngle</name>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="fed48712-6ccc-4e67-baec-3afe183dbece">
+          <evaluate>true</evaluate>
+          <expression>initState</expression>
+          <isTunable>true</isTunable>
+          <name>InitialState</name>
+          <referencedVariables type="slsa.mm.maskTree.Variable" uuid="9a8cbc50-2783-4b63-9c5a-28cf11244eab">
+            <name>initState</name>
+            <value></value>
+            <workspace>global-workspace</workspace>
+          </referencedVariables>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="36dad37d-1cb2-48a9-b7c2-53adee478ec6">
+          <expression>Interpreted execution</expression>
+          <name>SimulateUsing</name>
+        </dialogParameters>
+        <initializationCode>robotics.slmobile.internal.mask.MaskValidation.validateAckermannParameters(...
+    WheelBase, VehicleSpeedRange, MaxSteeringAngle, InitialState);</initializationCode>
+      </masks>
+      <parentId>root</parentId>
+    </maskedBlocks>
+    <maskedBlocks type="slsa.mm.maskTree.MaskedBlock" uuid="9f600025-0c9a-48af-a8a5-28e94cc2754e">
+      <blockPath>pathPlanningTest/Ackermann Kinematic Model/MATLAB System</blockPath>
+      <id>pathPlanningTest:413:85</id>
+      <masks type="slsa.mm.maskTree.Mask" uuid="cb68f0d8-4094-464c-ba16-2db3b6e6dd6a">
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="8dd57b91-7662-419d-956f-43e475c6455b">
+          <evaluate>true</evaluate>
+          <expression>WheelBase</expression>
+          <isTunable>true</isTunable>
+          <name>WheelBase</name>
+          <referencedVariables type="slsa.mm.maskTree.Variable" uuid="405ffbdf-ab09-4118-91b5-79482507acfb">
+            <name>WheelBase</name>
+            <value></value>
+            <workspace>pathPlanningTest:413</workspace>
+          </referencedVariables>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="9c6368de-817e-4527-b8b4-d4cc2e27e259">
+          <evaluate>true</evaluate>
+          <expression>VehicleSpeedRange</expression>
+          <isTunable>true</isTunable>
+          <name>VehicleSpeedRange</name>
+          <referencedVariables type="slsa.mm.maskTree.Variable" uuid="1271d30e-34ec-4471-887d-6dcc346fcf0a">
+            <name>VehicleSpeedRange</name>
+            <value></value>
+            <workspace>pathPlanningTest:413</workspace>
+          </referencedVariables>
+        </dialogParameters>
+        <dialogParameters type="slsa.mm.maskTree.DialogParameterInfo" uuid="61a85974-7aa1-4db3-ab13-b987537969a9">
+          <expression>Interpreted execution</expression>
+          <name>SimulateUsing</name>
+        </dialogParameters>
+        <initializationCode>matlab.system.MLSysBlockIconAndPortLabelsInfo.updateMLSysBlockIconAndPortLabels(gcbh)</initializationCode>
+        <skipInitializationCode>true</skipInitializationCode>
+      </masks>
+      <parentId>pathPlanningTest:413</parentId>
+    </maskedBlocks>
+    <maskedBlocks type="slsa.mm.maskTree.MaskedBlock" uuid="de6ed37d-2be9-4bbf-b0f0-7076b84a2455">
+      <childrenIds>pathPlanningTest:413</childrenIds>
+      <id>root</id>
+    </maskedBlocks>
+    <referencedGlobalWorkspaceVariables type="slsa.mm.maskTree.Variable" uuid="ad1ef6aa-7721-4523-9c37-38e80881014c">
+      <name>initState</name>
+      <value>AAFJTQAAAAAOAAAAUAAAAAYAAAAIAAAABgAAAAAAAAAFAAAACAAAAAEAAAAEAAAAAQAAAAAAAAAJAAAAIAAAAAAAAAAAAAAAAAAAAAAAEEAAAAAAAAAAAAAAAAAAAAAA</value>
+      <workspace>global-workspace</workspace>
+    </referencedGlobalWorkspaceVariables>
+    <referencedGlobalWorkspaceVariables type="slsa.mm.maskTree.Variable" uuid="68f7ce43-a93e-46ef-8348-e426d59311a4">
+      <name>wheelbase</name>
+      <value>AAFJTQAAAAAOAAAAOAAAAAYAAAAIAAAABgAAAAAAAAAFAAAACAAAAAEAAAABAAAAAQAAAAAAAAAJAAAACAAAAKRwPQrXo8A/</value>
+      <workspace>global-workspace</workspace>
+    </referencedGlobalWorkspaceVariables>
+    <flags type="slsa.mm.maskTree.MaskTreeFlags" uuid="f864908b-6cac-4cca-b14d-943391baddf4"/>
+  </slsa.mm.maskTree.MaskTree>
+</MF0>
