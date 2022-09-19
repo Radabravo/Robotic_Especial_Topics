@@ -1,10 +1,9 @@
-% v_scurve=s_curve_profile(5,0.01,0.1,0.25,vlinear);
-function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1near)
-    totalTime=5;
-    timeInterval=0.001;
-    taFactor=0.1;
+
+    totalTime=20;
+    timeInterval=0.5;
+    taFactor=0.2;
     tajFactor=0.25;
-    velLi1near=
+    velLi1near=1
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
     t = 0:timeInterval:totalTime;
@@ -15,7 +14,7 @@ function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1nea
     %Temos uma velocidade media vavg
     vavg=velLi1near;
     
-    %Considerando ta e td como 10% do tempo total
+    %Considerando ta e td como 20% do tempo total
     ta=taFactor*t(end);
     td=ta;
     tc=1-ta-td;
@@ -37,32 +36,46 @@ function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1nea
     i=2;
     
     while(t(i)<=taj)
+        
         acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
         i=i+1;
+        
     end
     while(t(i)<=(taj+tcj))
+        
         acc(i)=acc(i-1);
         i=i+1;
+        
     end
     while(t(i)<=(taj+tcj+tdj))
+        
         acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
         i=i+1;
+        
     end
-    while(t(i+1)<=(ta+tc))
+    while(t(i+1)<=(taj+tcj+tdj+tc))
+        
         acc(i)=acc(i-1);
         i=i+1;
+        
     end
-    while(t(i+1)<=(ta+tc+tdj))
+    while(t(i+1)<=(taj+tcj+tdj+tc+tdj))
+        
         acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
         i=i+1;
+        
     end
-    while(t(i+1)<=(ta+tc+taj+tcj))
+    while(t(i+1)<=(taj+tcj+tdj+tc+taj+tcj))
+        
         acc(i)=acc(i-1);
         i=i+1;
+        
     end
     while(t(i+1)<(taj+tcj+tdj+tc+taj+tcj+tdj))
+        
         acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
         i=i+1;
+        
     end
     for i=2:length(t)
         v(i)=v(i-1)+acc(i)*(t(i)-t(i-1));
@@ -74,14 +87,13 @@ function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1nea
         d(i)=d(i-1)+(v(i))*(t(i)-t(i-1));
     end
     
-%     figure('Name','Profiles');
-%     subplot(3,1,1)
-%     plot(t,acc)
-%     title('S-curve Acc')
-%     subplot(3,1,2)
-%     plot(t,v)
-%     title('S-curve Velocity')
-%     subplot(3,1,3)
-%     plot(t,d)
-%     title('S-curve trajectory')
-end 
+    figure('Name','Profiles');
+    subplot(3,1,1)
+    plot(t,acc)
+    title('S-curve Acc')
+    subplot(3,1,2)
+    plot(t,v)
+    title('S-curve Velocity')
+    subplot(3,1,3)
+    plot(t,d)
+    title('S-curve trajectory')
