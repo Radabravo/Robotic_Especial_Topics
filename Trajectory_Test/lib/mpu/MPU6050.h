@@ -75,7 +75,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef VECTOR_STRUCT_H
 #define VECTOR_STRUCT_H
+
 struct Vector
+{
+    int16_t XAxis;
+    int16_t YAxis;
+    int16_t ZAxis;
+};
+struct VectorFloat
 {
     float XAxis;
     float YAxis;
@@ -171,7 +178,7 @@ class MPU6050
 	mpu6050_onDelay_t getAccelPowerOnDelay();
 	void setAccelPowerOnDelay(mpu6050_onDelay_t delay);
 
-	uint8_t getIntStatus(void);
+	int16_t getIntStatus(void);
 
 	bool getIntZeroMotionEnabled(void);
 	void setIntZeroMotionEnabled(bool state);
@@ -180,20 +187,20 @@ class MPU6050
 	bool getIntFreeFallEnabled(void);
 	void setIntFreeFallEnabled(bool state);
 
-	uint8_t getMotionDetectionThreshold(void);
-	void setMotionDetectionThreshold(uint8_t threshold);
-	uint8_t getMotionDetectionDuration(void);
-	void setMotionDetectionDuration(uint8_t duration);
+	int16_t getMotionDetectionThreshold(void);
+	void setMotionDetectionThreshold(int16_t threshold);
+	int16_t getMotionDetectionDuration(void);
+	void setMotionDetectionDuration(int16_t duration);
 
-	uint8_t getZeroMotionDetectionThreshold(void);
-	void setZeroMotionDetectionThreshold(uint8_t threshold);
-	uint8_t getZeroMotionDetectionDuration(void);
-	void setZeroMotionDetectionDuration(uint8_t duration);
+	int16_t getZeroMotionDetectionThreshold(void);
+	void setZeroMotionDetectionThreshold(int16_t threshold);
+	int16_t getZeroMotionDetectionDuration(void);
+	void setZeroMotionDetectionDuration(int16_t duration);
 
-	uint8_t getFreeFallDetectionThreshold(void);
-	void setFreeFallDetectionThreshold(uint8_t threshold);
-	uint8_t getFreeFallDetectionDuration(void);
-	void setFreeFallDetectionDuration(uint8_t duration);
+	int16_t getFreeFallDetectionThreshold(void);
+	void setFreeFallDetectionThreshold(int16_t threshold);
+	int16_t getFreeFallDetectionDuration(void);
+	void setFreeFallDetectionDuration(int16_t duration);
 
 	bool getSleepEnabled(void);
 	void setSleepEnabled(bool state);
@@ -219,39 +226,42 @@ class MPU6050
 	int16_t getAccelOffsetZ(void);
 	void setAccelOffsetZ(int16_t offset);
 
-	void calibrateGyro(uint8_t samples = 50);
-	void setThreshold(uint8_t multiple = 1);
-	uint8_t getThreshold(void);
+	void calibrateGyro(int16_t samples = 50);
+	void setThreshold(int16_t multiple = 1);
+	int16_t getThreshold(void);
 
-	Vector readRawGyro(void);
-	Vector readNormalizeGyro(void);
+	VectorFloat readRawGyro(void);
+	VectorFloat readNormalizeGyro(void);
 
-	Vector readRawAccel(void);
-	Vector readNormalizeAccel(void);
-	Vector readScaledAccel(void);
+	VectorFloat readRawAccel(void);
+	VectorFloat readNormalizeAccel(void);
+	VectorFloat readScaledAccel(void);
 
     private:
 	Vector ra, rg; // Raw vectors
-	Vector na, ng; // Normalized vectors
-	Vector tg, dg; // Threshold and Delta for Gyro
-	Vector th;     // Threshold
+	VectorFloat rafloat, rgfloat; // Raw vectors
+	VectorFloat na, ng; // Normalized vectors
+	VectorFloat tg, dg; // Threshold and Delta for Gyro
+	VectorFloat th;     // Threshold
 	Activites a;   // Activities
 	
 	float dpsPerDigit, rangePerDigit;
 	float actualThreshold;
 	bool useCalibrate;
 	int mpuAddress;
+	float S;
 
-	uint8_t fastRegister8(uint8_t reg);
+	int16_t fastRegister8(int16_t reg);
 
-	uint8_t readRegister8(uint8_t reg);
-	void writeRegister8(uint8_t reg, uint8_t value);
+	int16_t readRegister8(int16_t reg);
+	void writeRegister8(int16_t reg, int16_t value);
 
-	int16_t readRegister16(uint8_t reg);
-	void writeRegister16(uint8_t reg, int16_t value);
+	int16_t readRegister16(int16_t reg);
+	void writeRegister16(int16_t reg, int16_t value);
 
-	bool readRegisterBit(uint8_t reg, uint8_t pos);
-	void writeRegisterBit(uint8_t reg, uint8_t pos, bool state);
+	bool readRegisterBit(int16_t reg, int16_t pos);
+	void writeRegisterBit(int16_t reg, int16_t pos, bool state);
+	VectorFloat convertVectors(Vector ra);
 
 };
 

@@ -3,4 +3,4 @@
 
 
 
-void accel_fit(float *input,int axis);
+void accel_fit(float *input,float *Zeros,int axis);

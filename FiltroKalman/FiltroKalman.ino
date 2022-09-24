@@ -160,7 +160,7 @@ void loop() {
     ang_kalmanYZ = FiltroKalmanYZ.getAngle(ang_accelYZ,vang_gyroX,T);
     ang_kalmanXY = FiltroKalmanXY.getAngle(ang_accelXY,vang_gyroZ,T);
   
-    AcX[1]=rawAccel.XAxis - sin(ang_kalmanXZ*PI/180);
+    AcX[1]=rawAccel.XAxis- sin(ang_kalmanXZ*PI/180);
     AcX[1]*=9.80665;
     AcX[1]=LPFilterAlternativeFirst(AcX[1],0);
     velocity((AcX),&Vx[1],&count0);

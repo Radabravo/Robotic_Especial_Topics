@@ -2,20 +2,20 @@
 #include "Filters.h"
 #include <math.h>
 
-void accel_fit(float *input,int axis)
+void accel_fit(float *input,float *Zeros,int axis)
 {
     float aux=*input;
     if(axis==0)
     { 
-      *input=(aux*1.005)-0.0670;
+      *input=(aux*1.005)-Zeros[axis];
     }
     if(axis==1)
     {
-      *input=(aux*1.00806809)+0.03041711;
+      *input=(aux*1.00806809)-Zeros[axis];
     } 
     if(axis==2)
     {
-      *input=(aux*0.97438991)-0.09827342;
+      *input=(aux*0.97438991)-Zeros[axis];
     }  
   
 }

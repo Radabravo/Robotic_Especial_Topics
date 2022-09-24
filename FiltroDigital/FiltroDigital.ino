@@ -4,11 +4,13 @@
 
 #define TSAMPLE 50000
 const int MPU = 0x68; //ICD address
-float AcX[2], AcY[2],AcZ[2], Tmp, Gyx[2],GyY[2],Gyz[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0;// Dados do MPU
+int16_t AcX[2], AcY[2],AcZ[2], Tmp, Gyx[2],GyY[2],Gyz[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0;// Dados do MPU
 unsigned long currentTime=0,previousTime=0;
 float ang_accel;
 float y_pass_alt[3][3], x_pass_alt[3][3];
 int count0 = 0;
+float S = 0.00006103515625;
+float acc;
 void MoveVector(float *vectorAddr, int tam, float value)
 {
   for (size_t k = tam-1; k > 0; k--)
@@ -43,7 +45,7 @@ float LPFilterAlternative(float x, int axis)
 
 }
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Wire.begin();
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
@@ -107,12 +109,12 @@ void loop() {
     AcX[1] = (Wire.read() << 8 | Wire.read()); 
     AcY[1] = (Wire.read() << 8 |Wire.read());
     //ang_accel = atan2(AcY,AcX) *180/PI;
-    AcX[1]=AcX[1]/16384;
-    accel_fit(&AcX[1],0);
-   
+    AcX[1]=AcX[1];
+    //accel_fit(&AcX[1],0);
+    acc =AcX[1]*S;
     //AcX[1]=LPFilterAlternative(AcX[1],0);
-    velocity((AcX),&Vx[1],&count0);
-    Serial.print(AcX[1]);Serial.print(",");
+    //velocity((AcX),&Vx[1],&count0);
+    Serial.print(acc);Serial.print(",");
     Serial.println(Vx[1]);
     AcX[0]=AcX[1];
     previousTime=currentTime;
