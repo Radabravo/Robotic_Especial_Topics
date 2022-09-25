@@ -1,15 +1,3 @@
-
-
- 
-
- 
-
- 
-
- 
-
-
-
 #include <Arduino.h>
 #include <Wire.h>
 #include "MPU6050.h"
@@ -17,6 +5,7 @@
 #include <ESP32Servo.h>
 #include <math.h>
 #include <Kalman.h>
+#include "AccVelDisp.h"
 
 #define TSAMPLE 1000000
 const double T= 0.05;
@@ -27,36 +16,40 @@ float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,an
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 int count0 = 0,countMvAvg=0;
-char option;
-bool isFirst;
+String option;
+
 
 volatile int long counterAB = 0;
 volatile int  laps = 0;
-uint8_t dir = 0;
+bool dir = false;
 
 void ai0() {
  
   // Determina qual o sentido de giro do encoder para o contador de voltas
-  if (digitalRead(35) == LOW) {
-    dir = 1;
-  }
-  else {
-    dir = 0;
-  }
+  // if (digitalRead(35) == LOW) {
+  //   dir = true;
+  // }
+  // else {
+  //   dir = false;
+  // }
  
   // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal B
   if (digitalRead(35) == HIGH && digitalRead(34) == LOW) {
     counterAB ++;
+    dir=true;
   }
   else {
     counterAB --;
+    dir=false;
   }
  
   if (digitalRead(35) == LOW && digitalRead(34) == HIGH) {
     counterAB ++;
+    dir=true;
   }
   else {
     counterAB --;
+    dir=false;
   }
  
 }
@@ -65,25 +58,29 @@ void ai0() {
 void ai1() {
  
   // Determina qual o sentido de giro do encoder para o contador de voltas
-  if (digitalRead(35) == HIGH) {
-    dir = 1;
-  }
-  else {
-    dir = 0;
-  }
+  // if (digitalRead(35) == HIGH) {
+  //   dir = true;
+  // }
+  // else {
+  //   dir = false;
+  // }
   // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal A
   if (digitalRead(34) == LOW && digitalRead(35) == HIGH) {
     counterAB --;
+    dir=false;
   }
   else {
     counterAB ++;
+    dir=true;
   }
  
   if (digitalRead(34) == HIGH && digitalRead(35) == LOW) {
     counterAB --;
+    dir=false;
   }
   else {
     counterAB ++;
+    dir=true;
   }
 }
 Kalman FiltroKalmanXZ;
@@ -93,7 +90,7 @@ VectorFloat rawGyro;
 VectorFloat rawAccel;
 MPU6050 mpu;
 
-void Setdirection(int dir);
+void  SetSteering(int  steering);
 void setupKalman()
 {
   FiltroKalmanXZ.setQangle(T*T*0.0466);
@@ -174,55 +171,8 @@ void fitData()
 }
 
 
-void velocity(float *Ac,float *velo,int *count0)
-{ 
-      if(abs(Ac[1])>0.1)
-      {
-      
-        if(*velo==0)
-        {
-          if(isFirst&&Ac[1]<0)dir=false;
-          if(isFirst&&Ac[1]>0)dir=true;         
-          *velo=*velo + Ac[1]*T;
-          isFirst=false;
-        }
-       
-        if(abs(*velo+Ac[1]*T)<=0)
-        {
-         *velo=0;
-        }    
-        else
-        {
-         *velo=*velo + Ac[1]*T;
-        }              
-        
-      }      
-      else
-      {
-        
-        *count0=*count0+1;
-       
-        if(*count0>10)
-        {
-          isFirst=true;
-          *velo=0;
-          
-          *count0=0;
-        }
-      }
-}
-void displacement(float *velo,float *dis)
-{ 
-      if(abs(velo[1])>0.00)
-      {
-        if(dir)*dis=*dis +abs(velo[1])*T;
-        else *dis=*dis -abs(velo[1])*T;
-        
-      }  
-  
-}
 
-Servo dirControl;
+Servo steeringControl;
 
 
 void clearAll()
@@ -248,7 +198,7 @@ void clearAll()
   Dx=0;
   Dy=0;
   Dz=0;
-  Setdirection(0);
+  SetSteering(0);
 }
 void setZero(float *Zeros, VectorFloat rawAccel)
 {
@@ -259,33 +209,21 @@ void setZero(float *Zeros, VectorFloat rawAccel)
 
 }
 
-void Setdirection(int dir)
-{
-  int _dir = 0;
-  _dir = map(dir, -512, 512, 0, 180);
-  dirControl.write(_dir);
+void SetSteering(int steering)
+{  
+  steering = map(steering, -512, 512, 0, 180);
+  steeringControl.write(steering);
 }
-// VectorFloat convertVectors(Vector intVector);
-// VectorFloat convertVectors(Vector intVector)
-// {
-//   VectorFloat floatVector;
-//   floatVector.XAxis=intVector.XAxis*S;
-//   floatVector.YAxis=intVector.YAxis*S;
-//   floatVector.ZAxis=intVector.ZAxis*S;
-//   return floatVector;
-  
-// }
+
 
 void setup() {
-  // AttachInterrupt0, digital Pin 2, Sinal A
-  // Ativa interrupção em qualquer mudança do sinal
+
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
  
-  // AttachInterrupt1, digital pin 3, Sinal B
-  // Ativa interrupção em qualquer mudança do sinal
+
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   Serial.begin(115200);
-  dirControl.attach(32);
+  steeringControl.attach(32);
  
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -302,19 +240,26 @@ void loop() {
   currentTime = micros();
   if (Serial.available())
   {
-    option = Serial.read();
-    if(option=='z')
+    option = Serial.readStringUntil('\n');
+    if(option=="zero")
     {
       setZero(Zeros, rawAccel);
     }
-    if(option=='c')
+    if(option=="clear")
     {
       clearAll();
      
     }
+    if(option=="teste")
+    {
+      Serial.print(option);
+      clearAll();
+     
+    }  
     
     
   }
+  
  
   if (currentTime-previousTime>=T*TSAMPLE)
   {  
@@ -339,8 +284,8 @@ void loop() {
     AcY[1]=rawAccel.YAxis- sin(ang_kalmanYZ*PI/180);
     AcY[1]*=9.80665;
     AcY[1]=LPFilterAlternativeFirst(AcY[1],1);
-    velocity((AcY),&Vy[1],&count0);
-    displacement(Vy,&Dy);
+    velocity((AcY),&Vy[1],&count0, T);
+    displacement(Vy,&Dy, T, dir);
     Serial.print(AcY[1]);Serial.print(",");
     Serial.print(Vy[1]);Serial.print(",");
     Serial.println(Dy);
