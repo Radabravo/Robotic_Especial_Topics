@@ -1,10 +1,10 @@
-#include <Servo.h>
+#include <ESP32Servo.h>
 Servo dirControl;
 int val = 0;
 int dir = 0;
 String c = " ";
 void setup() {
-  dirControl.attach(9);
+  dirControl.attach(32);
   Serial.begin(115200);
 
 }

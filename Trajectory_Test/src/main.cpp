@@ -7,31 +7,56 @@
 #include <Kalman.h>
 #include "AccVelDisp.h"
 
+
 #define TSAMPLE 1000000
 const double T= 0.05;
 const int MPU = 0x68; //ICD address
 float AcX[2], AcY[2],AcZ[2], Tmp, GyX[2],GyY[2],GyZ[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0,Zeros[3];// Dados do MPU
 unsigned long currentTime=0,previousTime=0;
+int stepCount=0;
 float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,ang_accelXY,vang_gyroZ,ang_kalmanXY;
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 int count0 = 0,countMvAvg=0;
+bool canRun=false;
 String option;
+Kalman FiltroKalmanXZ;
+Kalman FiltroKalmanYZ;
+Kalman FiltroKalmanXY;
+VectorFloat rawGyro;
+VectorFloat rawAccel;
+MPU6050 mpu;
 
+//motor_A
+int IN1 = 4 ;
+int IN2 = 18 ;
+int velocidadeA = 0;
+//motor_B
+int IN3 = 19 ;
+int IN4 = 23 ;
+int velocidadeB = 0;
 
 volatile int long counterAB = 0;
 volatile int  laps = 0;
 bool dir = false;
 
+//HEADERS
+void  SetSteering(int  steering);
+void setupKalman();
+float LPFilterAlternative(float x, int axis);
+float LPFilterAlternativeFirst(float x, int axis);
+float movingAvgFilter(float x);
+void fitData();
+void setZero(float *Zeros, VectorFloat rawAccel);
+void clearAll();
+void stopAll();
+void goUP(int velocity);
+void goDown(int velocity);
+//HEADERS
+
+
 void ai0() {
- 
-  // Determina qual o sentido de giro do encoder para o contador de voltas
-  // if (digitalRead(35) == LOW) {
-  //   dir = true;
-  // }
-  // else {
-  //   dir = false;
-  // }
+
  
   // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal B
   if (digitalRead(35) == HIGH && digitalRead(34) == LOW) {
@@ -54,17 +79,9 @@ void ai0() {
  
 }
  
-// AttachInterrupt1, digital Pin 3, Sinal B - Qualquer mudança de borda (CHANGE)
-void ai1() {
- 
-  // Determina qual o sentido de giro do encoder para o contador de voltas
-  // if (digitalRead(35) == HIGH) {
-  //   dir = true;
-  // }
-  // else {
-  //   dir = false;
-  // }
-  // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal A
+
+void ai1() { 
+
   if (digitalRead(34) == LOW && digitalRead(35) == HIGH) {
     counterAB --;
     dir=false;
@@ -83,14 +100,31 @@ void ai1() {
     dir=true;
   }
 }
-Kalman FiltroKalmanXZ;
-Kalman FiltroKalmanYZ;
-Kalman FiltroKalmanXY;
-VectorFloat rawGyro;
-VectorFloat rawAccel;
-MPU6050 mpu;
 
-void  SetSteering(int  steering);
+void stopAll()
+{
+    analogWrite(IN1,0);
+    analogWrite(IN2,0);
+    analogWrite(IN3,0);
+    analogWrite(IN4,0);    
+}
+
+void move(int velocity)
+{
+    
+  if (velocity>=0)
+  {
+    analogWrite(IN1,velocity);
+    analogWrite(IN3,velocity);
+  }
+  else
+  {
+    analogWrite(IN2,velocity);
+    analogWrite(IN4,velocity);
+  }
+    
+} 
+
 void setupKalman()
 {
   FiltroKalmanXZ.setQangle(T*T*0.0466);
@@ -234,6 +268,7 @@ void setup() {
   mpu.setGyroOffsetX(84);
   mpu.setGyroOffsetY(50);
   mpu.setGyroOffsetZ(84);
+  stopAll();
 }
 
 void loop() {
@@ -252,10 +287,12 @@ void loop() {
     }
     if(option=="teste")
     {
-      Serial.print(option);
-      clearAll();
+      
+      stopAll();
+      canRun=true;
      
     }  
+    else option=" ";
     
     
   }
@@ -263,6 +300,20 @@ void loop() {
  
   if (currentTime-previousTime>=T*TSAMPLE)
   {  
+    if(canRun)
+    {
+      stepCount++;
+      move(100);
+      if (stepCount>=1/T)
+      {
+        stopAll();
+        canRun=false;
+        stepCount=0;
+        
+      }
+      
+    }
+   
     rawAccel=mpu.readRawAccel();
     rawGyro=mpu.readRawGyro();
 
@@ -286,9 +337,10 @@ void loop() {
     AcY[1]=LPFilterAlternativeFirst(AcY[1],1);
     velocity((AcY),&Vy[1],&count0, T);
     displacement(Vy,&Dy, T, dir);
-    Serial.print(AcY[1]);Serial.print(",");
-    Serial.print(Vy[1]);Serial.print(",");
-    Serial.println(Dy);
+    // Serial.print(AcY[1]);Serial.print(",");
+    // Serial.print(Vy[1]);Serial.print(",");
+    // Serial.println(Dy);
+    Serial.println(counterAB);
     
   } 
 
