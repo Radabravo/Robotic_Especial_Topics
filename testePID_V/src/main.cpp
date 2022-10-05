@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <PID_v1.h>
 #define TSAMPLE 1000000
-#define KP 0.2
-#define KI 0.2
-#define KD 0.005
+#define KP 1
+#define KI 0.5
+#define KD 0
 
 const double T= 0.05;
 //motor_A
@@ -11,22 +11,27 @@ int IN1 = 4 ;
 int IN2 = 18 ;
 float velocidadeA = 0;
 //motor_B
-
+double error;
+double lastError;
+double input, output, setPoint;
+double cumError, rateError;
 int IN3 = 19 ;
 int IN4 = 23 ;
 float velocidadeB = 0;
 int MIN_PWM = 0;
 int MAX_PWM = 255;
 int actualPWM=0;
-volatile int long counterAB = 0;
+volatile int counterAB = 0;
 volatile int  laps = 0;
 bool dir = false;bool canRun=false;
 unsigned long currentTime=0,previousTime=0;
+double elapsedTime;
 String option;
 int stepCount=0;
-float setPoint;
+
 double Setpoint, Input, Output;
-PID myPID(&Input, &Output, &Setpoint,KP,KI,KD, DIRECT);
+double computePID(double inp);
+PID myPID(&Input, &Output, &Setpoint,KP,0,0, DIRECT);
 void stopAll();
 void stopAll()
 {
@@ -123,22 +128,24 @@ void loop() {
     if(option=="teste")
     {
       
-      actualPWM=100;
+      actualPWM=50;
       //Output=100;
       
       Setpoint=actualPWM;
       counterAB=0;
+      stepCount=0;
       stopAll();
       
       move(actualPWM);
       canRun=true;
       option=" ";
+      previousTime=currentTime;
      
     } 
     if(option=="teste1")
     {
       
-      actualPWM=200;      
+      actualPWM=100;      
       Setpoint=actualPWM;
       counterAB=0;      
       option=" ";
@@ -153,41 +160,24 @@ void loop() {
     if(canRun)
     {
       stepCount++;
-      move(Output);
+      
       if (stepCount>=0.1/T)
       {
         detachInterrupt(34);
         detachInterrupt(35);
-        Input = (0.033*counterAB/52)/0.0012+0.0567;
-        myPID.Compute();
+        Input = ((0.033*counterAB/52)+0.0567)/0.0012;
+        move(Output);
+        Output=computePID(Input);
         
-        // float vel=0.033*counterAB/52;
-        // if (setPoint-vel<0)
-        // {
-        //   if (actualPWM>MIN_PWM)
-        //   {
-        //     actualPWM--;
-        //   }
-          
-          
-        // }
-        // if (setPoint-vel>=0)
-        // {
-        //   if (actualPWM<MAX_PWM)
-        //   {
-        //     actualPWM++;
-        //   }
-          
-          
-        // }
+       
+        Serial.print("Values\n");
         Serial.print(Input);
-        Serial.print(",");
+        Serial.print("\n");
         Serial.print(counterAB);
-        Serial.print(",");
-        Serial.print(Setpoint);
-        Serial.print(",");
-        counterAB=0;
-        stepCount=0;
+        Serial.print("\n");
+        Serial.print(error);
+        Serial.print("\n");
+        
         Serial.println(Output);
         attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
         attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
@@ -198,6 +188,19 @@ void loop() {
     previousTime=currentTime;
   }
 }
-
-
-
+ 
+double computePID(double inp){     
+                      //get current time
+        elapsedTime = 0.1/T;        //compute time elapsed from previous computation
+        
+        error = Setpoint - inp;                                // determine error
+        cumError += error * elapsedTime;                // compute integral
+        rateError = (error - lastError)/elapsedTime;   // compute derivative
+ 
+        double out = KP*error + KI*cumError + KD*rateError;                //PID output               
+ 
+        lastError = error;                                //remember current error
+        previousTime = currentTime;                        //remember current time
+ 
+        return out;                                        //have function return the PID output
+}
