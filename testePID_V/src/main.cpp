@@ -2,7 +2,7 @@
 #include <PID_v1.h>
 #define TSAMPLE 1000000
 #define KP 1
-#define KI 0.5
+#define KI 0
 #define KD 0
 
 const double T= 0.05;
@@ -28,7 +28,7 @@ unsigned long currentTime=0,previousTime=0;
 double elapsedTime;
 String option;
 int stepCount=0;
-
+int convertVelToPwm(double vel);
 double Setpoint, Input, Output;
 double computePID(double inp);
 PID myPID(&Input, &Output, &Setpoint,KP,0,0, DIRECT);
@@ -102,7 +102,8 @@ void ai1() {
   }
 }
 void setup() {
- attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
+  stopAll();
+  attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
  
 
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
@@ -128,15 +129,17 @@ void loop() {
     if(option=="teste")
     {
       
-      actualPWM=50;
+      actualPWM=convertVelToPwm(0.065);
       //Output=100;
       
-      Setpoint=actualPWM;
+      Setpoint=0.065;
       counterAB=0;
       stepCount=0;
       stopAll();
       
       move(actualPWM);
+      
+      
       canRun=true;
       option=" ";
       previousTime=currentTime;
@@ -145,12 +148,21 @@ void loop() {
     if(option=="teste1")
     {
       
-      actualPWM=100;      
-      Setpoint=actualPWM;
+      actualPWM=convertVelToPwm(0.178);    
+      Setpoint=0.178;
       counterAB=0;      
       option=" ";
      
-    }   
+    }
+    if(option=="teste2")
+    {
+      
+      actualPWM=convertVelToPwm(0.065);   
+      Setpoint=0.065;
+      counterAB=0;      
+      option=" ";
+     
+    }      
     else option=" ";
     
     
@@ -161,43 +173,54 @@ void loop() {
     {
       stepCount++;
       
-      if (stepCount>=0.1/T)
+      if (stepCount>=1/T)
       {
         detachInterrupt(34);
         detachInterrupt(35);
-        Input = ((0.033*counterAB/52)+0.0567)/0.0012;
-        move(Output);
-        Output=computePID(Input);
+        Input = ((0.033*counterAB/520));
         
-       
+        Output+=computePID(Input);
+        
+        //move(convertVelToPwm(Output));
         Serial.print("Values\n");
         Serial.print(Input);
         Serial.print("\n");
         Serial.print(counterAB);
         Serial.print("\n");
-        Serial.print(error);
+        Serial.print(Setpoint);
         Serial.print("\n");
         
         Serial.println(Output);
+        stepCount=0;counterAB=0;
         attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
         attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
         
       }
+    //Serial.print(Input);Serial.print(",");Serial.println(Output);
       
     }
     previousTime=currentTime;
   }
+
+}
+int convertVelToPwm(double vel)
+{
+  int pwm = (int)((vel+0.0480)/0.0023);
+  //sem estar no chão
+  return pwm;
+  // estando no chão
+  // return 0.0093*vel - 0.5250;
 }
  
 double computePID(double inp){     
                       //get current time
-        elapsedTime = 0.1/T;        //compute time elapsed from previous computation
+        elapsedTime = 0.1;        //compute time elapsed from previous computation
         
         error = Setpoint - inp;                                // determine error
         cumError += error * elapsedTime;                // compute integral
         rateError = (error - lastError)/elapsedTime;   // compute derivative
  
-        double out = KP*error + KI*cumError + KD*rateError;                //PID output               
+        double out = 1.4*error + 0*cumError + KD*rateError;                //PID output               
  
         lastError = error;                                //remember current error
         previousTime = currentTime;                        //remember current time

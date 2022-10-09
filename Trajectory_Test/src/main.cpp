@@ -303,7 +303,7 @@ void loop() {
     if(canRun)
     {
       stepCount++;
-      move(100);
+      move(50);
       if (stepCount>=1/T)
       {
         stopAll();

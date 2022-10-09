@@ -1,9 +1,9 @@
 
-    totalTime=20;
+    totalTime=10;
     timeInterval=0.5;
     taFactor=0.2;
     tajFactor=0.25;
-    velLi1near=1
+    velLi1near=0.1;
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
     t = 0:timeInterval:totalTime;
@@ -53,25 +53,25 @@
         i=i+1;
         
     end
-    while(t(i+1)<=(taj+tcj+tdj+tc))
+    while(t(i)<=(taj+tcj+tdj+tc))
         
         acc(i)=acc(i-1);
         i=i+1;
         
     end
-    while(t(i+1)<=(taj+tcj+tdj+tc+tdj))
+    while(t(i)<=(taj+tcj+tdj+tc+tdj))
         
         acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
         i=i+1;
         
     end
-    while(t(i+1)<=(taj+tcj+tdj+tc+taj+tcj))
+    while(t(i)<=(taj+tcj+tdj+tc+taj+tcj))
         
         acc(i)=acc(i-1);
         i=i+1;
         
     end
-    while(t(i+1)<(taj+tcj+tdj+tc+taj+tcj+tdj))
+    while(t(i)<(taj+tcj+tdj+tc+taj+tcj+tdj))
         
         acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
         i=i+1;

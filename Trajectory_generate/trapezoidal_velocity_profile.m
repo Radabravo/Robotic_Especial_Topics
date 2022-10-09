@@ -1,10 +1,10 @@
 %%Geração de um perfil de velocidade trapezoidal, visando a diminuição de
 %%trancos
 % Dado um tempo de t segundos
-t = 0:0.001:10;
+t = 0:0.5:10;
 v=zeros(1,length(t));
 % Uma trajetória retilinea de x metros
-dt=5;
+dt=1;
 %Temos uma velocidade media vavg
 vavg=dt/t(end);
 %Considerando ta e td como 10% do tempo total
@@ -20,11 +20,11 @@ while(t(i)<=ta)
     v(i)=v(i-1)+a*(t(i)-t(i-1));
     i=i+1;
 end
-while(t(i+1)<=(ta+tc))
+while(t(i)<=(ta+tc))
     v(i)=v(i-1);
     i=i+1;
 end
-while(t(i+1)<(ta+tc+td))
+while(t(i)<(ta+tc+td))
     v(i)=v(i-1)-a*(t(i)-t(i-1));
     i=i+1;
 end
