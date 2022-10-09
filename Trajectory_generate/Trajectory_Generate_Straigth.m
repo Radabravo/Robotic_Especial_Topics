@@ -11,9 +11,9 @@ clear;close all;
 
 
 % Tempo amostrado de 1ms
-interval=0.001;
+interval=0.5;
 % Para um percurso de 5 segundos
-t = 0:interval:5;
+t = 0:interval:10;
 
 %Variáveis para manipulações computacionbais:
 x=zeros([1 length(t)]);y=zeros([1 length(t)]);dx=zeros([1 length(t)]);dy=zeros([1 length(t)]);dtheta=zeros([1 length(t)]);dphi=zeros([1 length(t)]);phi=zeros([1 length(t)]);v=zeros([1 length(t)]);theta=zeros([1 length(t)]);
@@ -25,12 +25,12 @@ wheelbase=0.13;
 y(1)=4;x(1)=0;theta(1)=0;phi(1)=0;
 % Dado uma velocidade vlinear, constante para 5 segundos em uma reta de 5
 % metros
-vlinear=5/t(end);
+vlinear=10/t(end);
 %temos o vetor de velocidades
 % for i = 1:length(t)
 %     v(i)=vlinear;
 % end
-v_scurve=s_curve_profile(5,0.001,0.1,0.25,vlinear);
+v_scurve=s_curve_profile(10,0.5,0.2,0.25,vlinear);
 
 for i = 1:length(t)
     v(i)=v_scurve(i);
@@ -85,7 +85,7 @@ theta1 = robotPose(:,thetaIdx);
 thetaEuler = zeros(size(robotPose, 1), 3 * size(theta1, 2));
 thetaEuler(:, end) = theta1;
 
-for k = 1:100:size(xyz, 1)
+for k = 1:size(xyz, 1)
     show(map)
     hold on;
     

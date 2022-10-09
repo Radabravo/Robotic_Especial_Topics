@@ -3,7 +3,7 @@
     timeInterval=0.5;
     taFactor=0.2;
     tajFactor=0.25;
-    velLi1near=0.1;
+    velLi1near=1;
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
     t = 0:timeInterval:totalTime;

@@ -1,10 +1,6 @@
 % v_scurve=s_curve_profile(5,0.01,0.1,0.25,vlinear);
-function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1near)
-    totalTime=5;
-    timeInterval=0.001;
-    taFactor=0.1;
-    tajFactor=0.25;
-    velLi1near=
+function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLinear)
+    
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
     t = 0:timeInterval:totalTime;
@@ -13,7 +9,7 @@ function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1nea
 %     % Uma trajetória retilinea de x metros
 %     dt=totalDistance;
     %Temos uma velocidade media vavg
-    vavg=velLi1near;
+    vavg=velLinear;
     
     %Considerando ta e td como 10% do tempo total
     ta=taFactor*t(end);
@@ -48,19 +44,19 @@ function v = s_curve_profile(totalTime,timeInterval,taFactor,tajFactor,velLi1nea
         acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
         i=i+1;
     end
-    while(t(i+1)<=(ta+tc))
+    while(t(i)<=(ta+tc))
         acc(i)=acc(i-1);
         i=i+1;
     end
-    while(t(i+1)<=(ta+tc+tdj))
+    while(t(i)<=(ta+tc+tdj))
         acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
         i=i+1;
     end
-    while(t(i+1)<=(ta+tc+taj+tcj))
+    while(t(i)<=(ta+tc+taj+tcj))
         acc(i)=acc(i-1);
         i=i+1;
     end
-    while(t(i+1)<(taj+tcj+tdj+tc+taj+tcj+tdj))
+    while(t(i)<(taj+tcj+tdj+tc+taj+tcj+tdj))
         acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
         i=i+1;
     end
