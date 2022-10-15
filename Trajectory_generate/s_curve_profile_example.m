@@ -3,7 +3,7 @@
     timeInterval=0.5;
     taFactor=0.2;
     tajFactor=0.25;
-    velLi1near=1;
+    velLi1near=0.1;
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
     t = 0:timeInterval:totalTime;
@@ -87,13 +87,16 @@
         d(i)=d(i-1)+(v(i))*(t(i)-t(i-1));
     end
     
+    acc1 = 0.06 - 0.018.*t;
+    vel1 = 0.06.*t - 0.006.*t.^2;
+    disp = 0.03.*t.^2 - 0.002.*t.^3;
     figure('Name','Profiles');
     subplot(3,1,1)
-    plot(t,acc)
+    plot(t,acc1)
     title('S-curve Acc')
     subplot(3,1,2)
-    plot(t,v)
+    plot(t,vel1)
     title('S-curve Velocity')
     subplot(3,1,3)
-    plot(t,d)
+    plot(t,disp)
     title('S-curve trajectory')

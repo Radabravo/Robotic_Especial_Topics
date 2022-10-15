@@ -25,7 +25,7 @@ wheelbase=0.13;
 y(1)=4;x(1)=0;theta(1)=0;phi(1)=0;
 % Dado uma velocidade vlinear, constante para 5 segundos em uma reta de 5
 % metros
-vlinear=10/t(end);
+vlinear=1/t(end);
 %temos o vetor de velocidades
 % for i = 1:length(t)
 %     v(i)=vlinear;

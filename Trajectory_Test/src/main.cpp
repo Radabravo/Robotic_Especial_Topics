@@ -233,6 +233,7 @@ void clearAll()
   Dy=0;
   Dz=0;
   SetSteering(0);
+  counterAB=0;
 }
 void setZero(float *Zeros, VectorFloat rawAccel)
 {
@@ -270,7 +271,15 @@ void setup() {
   mpu.setGyroOffsetZ(84);
   stopAll();
 }
-
+int convertVelToPwm(double vel)
+{
+  // int pwm = (int)((vel+0.0480)/0.0023);
+  // //sem estar no chão
+  // return pwm;
+  // estando no chão
+  int pwm = (int)((vel+0.5250)/0.0093);
+  return pwm;
+}
 void loop() {
   currentTime = micros();
   if (Serial.available())
@@ -303,7 +312,7 @@ void loop() {
     if(canRun)
     {
       stepCount++;
-      move(50);
+      move(80);
       if (stepCount>=1/T)
       {
         stopAll();

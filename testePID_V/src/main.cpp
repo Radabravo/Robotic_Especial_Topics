@@ -179,7 +179,7 @@ void loop() {
         detachInterrupt(35);
         Input = ((0.033*counterAB/520));
         
-        Output+=computePID(Input);
+       // Output+=computePID(Input);
         
         //move(convertVelToPwm(Output));
         Serial.print("Values\n");
