@@ -1,8 +1,6 @@
-
-    totalTime=5;
+    totalTime=10;
     timeInterval=0.5;
     taFactor=0.1;
-    tajFactor=0.1;
     velLi1near=0.1;
     %%Geração de um perfil de velocidade trapezoidal
     % Dado um tempo de t segundos
@@ -17,66 +15,36 @@
     %Considerando ta e td como 20% do tempo total
     ta=taFactor*t(end);
     td=ta;
-    tc=1-ta-td;
     
-    %Considerando o perfil de aceleração como triangular, temos os tempos de
-    %jerk em 50% da aceleração
-    taj=ta*tajFactor;
-    tdj=taj;
-    tcj=ta-taj-tdj;
+    
     
     %tc sendo o tempo de velocidade constante
     tc=t(end)-ta-td;
     %dado dt=((1/2)*vmax)*(ta+td)+vmax*(tc)
     %temos dt=(1/10)*vmax+vmax*(8/10) e dt=vavg*tt
     vmax=vavg*((ta+tc)/t(end))^-1;
-    accavg=vmax/(ta);
-    accmax=accavg*((taj+tcj)/ta)^-1;
-    jerk=accmax/taj;
-    i=2;
+    accavg=vmax/(ta);       
+    i=1;
+    while(t(i)<ta)
+        
+        acc(i)=accavg;
+        i=i+1;
+        
+    end
     
-    while(t(i)<=taj)
+    while(t(i)<=(ta+tc))
         
-        acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
+        acc(i)=0;
         i=i+1;
         
     end
-    while(t(i)<=(taj+tcj))
+    while(t(i)<(ta+td+tc))
         
-        acc(i)=acc(i-1);
+        acc(i)=-accavg;
         i=i+1;
         
     end
-    while(t(i)<=(taj+tcj+tdj))
-        
-        acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
-        i=i+1;
-        
-    end
-    while(t(i)<=(taj+tcj+tdj+tc))
-        
-        acc(i)=acc(i-1);
-        i=i+1;
-        
-    end
-    while(t(i)<=(taj+tcj+tdj+tc+tdj))
-        
-        acc(i)=acc(i-1)-jerk*(t(i)-t(i-1));
-        i=i+1;
-        
-    end
-    while(t(i)<=(taj+tcj+tdj+tc+taj+tcj))
-        
-        acc(i)=acc(i-1);
-        i=i+1;
-        
-    end
-    while(t(i)<(taj+tcj+tdj+tc+taj+tcj+tdj))
-        
-        acc(i)=acc(i-1)+jerk*(t(i)-t(i-1));
-        i=i+1;
-        
-    end
+   
     for i=2:length(t)
         v(i)=v(i-1)+acc(i)*(t(i)-t(i-1));
     end

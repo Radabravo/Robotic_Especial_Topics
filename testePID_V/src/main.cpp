@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <PID_v1.h>
+
 #define TSAMPLE 1000000
 #define KP 1
 #define KI 0
@@ -32,6 +33,7 @@ int convertVelToPwm(double vel);
 double Setpoint, Input, Output;
 double computePID(double inp);
 PID myPID(&Input, &Output, &Setpoint,KP,0,0, DIRECT);
+
 void stopAll();
 void stopAll()
 {
@@ -205,7 +207,7 @@ void loop() {
 }
 int convertVelToPwm(double vel)
 {
-  int pwm = (int)((vel+0.0480)/0.0023);
+  int pwm = (int)((vel+0.0383)/0.0025);
   //sem estar no chão
   return pwm;
   // estando no chão

@@ -48,10 +48,10 @@ void displacement(float *velo,float *dis, double T, bool dir)
       
         if(dir){
             *dis=*dis +abs(velo[1])*T;
-            Serial.print("Frente");    
+            
         }
         else {*dis=*dis -abs(velo[1])*T;
-         Serial.print("Tras"); 
+         
         }
         
     

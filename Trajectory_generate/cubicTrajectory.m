@@ -17,7 +17,7 @@
 
 
     for i=2:length(t)
-        v(i)=v(i-1)+acc(i)*(t(i)-t(i-1));
+        v(i)=v(i-1)+acc(i)*(timeInterval);
     end    
     
     for i=2:length(v)

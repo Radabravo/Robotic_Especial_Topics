@@ -6,17 +6,30 @@
 #include <math.h>
 #include <Kalman.h>
 #include "AccVelDisp.h"
+#include <BluetoothSerial.h>
 
 
 #define TSAMPLE 1000000
+#define SERIAL_TIME_INTERVAL 1000 // miliseconds
+#define BT_TIME_INTERVAL 50       // miliseconds
+#define BT_NUM_PACKAGES 100
+
+BluetoothSerial serialBT;
+uint8_t dataReceived;
+unsigned long serialSendInterval;
+unsigned long btSendInterval;
+const int analogPin = 34;
+int analogData = 0;
+uint32_t package = 0;
 const double T= 0.05;
 const int MPU = 0x68; //ICD address
 float AcX[2], AcY[2],AcZ[2], Tmp, GyX[2],GyY[2],GyZ[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0,Zeros[3];// Dados do MPU
 unsigned long currentTime=0,previousTime=0;
-int stepCount=0;
+int stepCount=0,stepCount1=0;
 float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,ang_accelXY,vang_gyroZ,ang_kalmanXY;
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
+float avgVel=0;
 int count0 = 0,countMvAvg=0;
 bool canRun=false;
 String option;
@@ -37,6 +50,7 @@ int IN4 = 23 ;
 int velocidadeB = 0;
 
 volatile int long counterAB = 0;
+volatile int long totalCounterAB = 0;
 volatile int  laps = 0;
 bool dir = false;
 
@@ -52,7 +66,11 @@ void clearAll();
 void stopAll();
 void goUP(int velocity);
 void goDown(int velocity);
+void SendData_Bluetooth();
+void SendData_Serial();
 //HEADERS
+
+
 
 
 void ai0() {
@@ -61,46 +79,98 @@ void ai0() {
   // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal B
   if (digitalRead(35) == HIGH && digitalRead(34) == LOW) {
     counterAB ++;
+    totalCounterAB ++;
     dir=true;
   }
   else {
     counterAB --;
+    totalCounterAB --;
     dir=false;
   }
  
   if (digitalRead(35) == LOW && digitalRead(34) == HIGH) {
     counterAB ++;
+    totalCounterAB ++;
     dir=true;
   }
   else {
     counterAB --;
+    totalCounterAB --;
     dir=false;
   }
  
 }
  
-
 void ai1() { 
 
   if (digitalRead(34) == LOW && digitalRead(35) == HIGH) {
     counterAB --;
+    totalCounterAB --;
     dir=false;
   }
   else {
     counterAB ++;
+    totalCounterAB ++;
     dir=true;
   }
  
   if (digitalRead(34) == HIGH && digitalRead(35) == LOW) {
     counterAB --;
+    totalCounterAB --;
     dir=false;
   }
   else {
     counterAB ++;
+    totalCounterAB++;
     dir=true;
   }
 }
+void SendData_Bluetooth()
+{
+  if(!serialBT.hasClient()){
+    Serial.println("Not connected");
+    delay(1000);
+    return;
+  }
+  // Sending 16 bits of data over bluetooth.
+  uint8_t data1 = analogData & 0xFF;        // lsb
+  uint8_t data2 = (analogData >> 8) & 0xFF; // msb
 
+  if (millis() - btSendInterval >= BT_TIME_INTERVAL)
+  {
+    uint8_t data[6];
+
+    data[0] = 0xAB;
+    data[1] = 0xCD;
+    data[2] = data1;
+    data[3] = data2;
+    data[4] = 0xAF;
+    data[5] = 0xCF;
+
+    serialBT.write(data, sizeof(data));
+    package++;
+
+    if (package >= BT_NUM_PACKAGES)
+    {
+      // Prevent congested.
+      serialBT.flush();
+      package = 0;
+    }
+
+    btSendInterval = millis();
+  }
+}
+
+void SendData_Serial()
+{
+  // Send data over serial with one second interval.
+  // Just for debug.
+  if (millis() - serialSendInterval >= SERIAL_TIME_INTERVAL)
+  {
+    serialSendInterval = millis();
+    Serial.println(analogData);
+  }
+}
 void stopAll()
 {
     analogWrite(IN1,0);
@@ -140,7 +210,6 @@ void setupKalman()
   FiltroKalmanYZ.setRmeasure(10);
   FiltroKalmanYZ.setAngle(0);
 }
-
 float LPFilterAlternative(float x, int axis)
 {
   
@@ -257,7 +326,7 @@ void setup() {
  
 
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
-  Serial.begin(115200);
+  Serial.begin(9600);
   steeringControl.attach(32);
  
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
@@ -269,6 +338,10 @@ void setup() {
   mpu.setGyroOffsetX(84);
   mpu.setGyroOffsetY(50);
   mpu.setGyroOffsetZ(84);
+  dataReceived = 0;
+  serialBT.begin("ESP32");
+  serialSendInterval = millis();
+  btSendInterval = millis();
   stopAll();
 }
 int convertVelToPwm(double vel)
@@ -294,13 +367,107 @@ void loop() {
       clearAll();
      
     }
-    if(option=="teste")
+    if(option=="teste1")
     {
       
       stopAll();
+      counterAB=0;
+      totalCounterAB=0;
       canRun=true;
+      move(50);
      
     }  
+    if(option=="teste2")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(75);
+     
+    } 
+    if(option=="teste3")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(100);
+     
+    } 
+    if(option=="teste4")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(125);
+     
+    }
+    if(option=="teste5")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(150);
+     
+    } 
+    if(option=="teste6")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(175);
+     
+    }  
+    if(option=="teste7")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(200);
+     
+    }   
+    if(option=="teste8")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(225);
+     
+    }
+    if(option=="teste9")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(250);
+     
+    }   
+    if(option=="teste10")
+    {
+      
+      stopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      move(255);
+     
+    }   
+             
     else option=" ";
     
     
@@ -311,15 +478,25 @@ void loop() {
   {  
     if(canRun)
     {
+      
       stepCount++;
-      move(80);
-      if (stepCount>=1/T)
+      stepCount1++;
+      
+      if (stepCount1==0.1/T)
+      {
+        avgVel=0.33*counterAB/52;
+        stepCount1=0;
+        counterAB=0;
+      }
+      
+      if (stepCount>=5/T)
       {
         stopAll();
         canRun=false;
         stepCount=0;
         
       }
+      
       
     }
    
@@ -349,10 +526,15 @@ void loop() {
     // Serial.print(AcY[1]);Serial.print(",");
     // Serial.print(Vy[1]);Serial.print(",");
     // Serial.println(Dy);
-    Serial.println(counterAB);
+    // Serial.println("Total Pulses: ");
+    // Serial.println(((totalCounterAB)));
+    // Serial.println("Average speed: ");
+    // Serial.println(((avgVel)), 5);
     
   } 
-
+  analogData = counterAB;
+  SendData_Bluetooth();
+  SendData_Serial();
 
 }
 
