@@ -11,7 +11,7 @@
 
 #define TSAMPLE 1000000
 #define SERIAL_TIME_INTERVAL 1000 // miliseconds
-#define BT_TIME_INTERVAL 50       // miliseconds
+#define BT_TIME_INTERVAL 50     // miliseconds
 #define BT_NUM_PACKAGES 100
 
 BluetoothSerial serialBT;
@@ -19,7 +19,7 @@ uint8_t dataReceived;
 unsigned long serialSendInterval;
 unsigned long btSendInterval;
 const int analogPin = 34;
-int analogData = 0;
+long int analogData = 0;
 uint32_t package = 0;
 const double T= 0.05;
 const int MPU = 0x68; //ICD address
@@ -133,19 +133,27 @@ void SendData_Bluetooth()
     return;
   }
   // Sending 16 bits of data over bluetooth.
-  uint8_t data1 = analogData & 0xFF;        // lsb
-  uint8_t data2 = (analogData >> 8) & 0xFF; // msb
+  uint8_t command = 'g';
+  
+  uint8_t data1 = analogData & 0xFF;        //lsb
+  uint8_t data2 = (analogData >> 8) ; 
+  uint8_t data3 = (analogData >> 8) ; 
+  uint8_t data4 = (analogData >> 8) & 0xFF; // msb
 
   if (millis() - btSendInterval >= BT_TIME_INTERVAL)
   {
-    uint8_t data[6];
+    uint8_t data[10];
 
     data[0] = 0xAB;
     data[1] = 0xCD;
-    data[2] = data1;
-    data[3] = data2;
-    data[4] = 0xAF;
-    data[5] = 0xCF;
+    data[2] = command;
+    data[3] = command;
+    data[4] = data1;
+    data[5] = data2;
+    data[6] = data3;
+    data[7] = data4;
+    data[8] = 0xAF;
+    data[9] = 0xCF;
 
     serialBT.write(data, sizeof(data));
     package++;
@@ -534,7 +542,7 @@ void loop() {
   } 
   analogData = counterAB;
   SendData_Bluetooth();
-  SendData_Serial();
+  //SendData_Serial();
 
 }
 
