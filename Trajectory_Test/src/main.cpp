@@ -5,17 +5,18 @@
 #include <ESP32Servo.h>
 #include <math.h>
 #include <Kalman.h>
+#include "Decode.h"
 #include "AccVelDisp.h"
 #include <BluetoothSerial.h>
 
 
 #define TSAMPLE 1000000
 #define SERIAL_TIME_INTERVAL 1000 // miliseconds
-#define BT_TIME_INTERVAL 50     // miliseconds
+#define BT_TIME_INTERVAL 100    // miliseconds
 #define BT_NUM_PACKAGES 100
 
 BluetoothSerial serialBT;
-uint8_t dataReceived;
+
 unsigned long serialSendInterval;
 unsigned long btSendInterval;
 const int analogPin = 34;
@@ -70,7 +71,12 @@ void SendData_Bluetooth();
 void SendData_Serial();
 //HEADERS
 
-
+//Decode BT
+uint8_t Header1 = 0xAB;
+uint8_t Header2 = 0xCD;
+uint8_t Tail1 = 0xAF;
+uint8_t Tail2 = 0xCF;
+//Decode BT
 
 
 void ai0() {
@@ -136,9 +142,9 @@ void SendData_Bluetooth()
   uint8_t command = 'g';
   
   uint8_t data1 = analogData & 0xFF;        //lsb
-  uint8_t data2 = (analogData >> 8) ; 
-  uint8_t data3 = (analogData >> 8) ; 
-  uint8_t data4 = (analogData >> 8) & 0xFF; // msb
+  uint8_t data2 = (analogData >> 8) & 0xFF;; 
+  uint8_t data3 = (analogData >> 16)& 0xFF; ; 
+  uint8_t data4 = (analogData >> 24) & 0xFF; // msb
 
   if (millis() - btSendInterval >= BT_TIME_INTERVAL)
   {
@@ -154,6 +160,16 @@ void SendData_Bluetooth()
     data[7] = data4;
     data[8] = 0xAF;
     data[9] = 0xCF;
+    // data[0] = 0xAB;
+    // data[1] = 0xCD;
+    // data[2] = data1;
+    // data[3] = data2;
+    // data[4] = data3;
+    // data[5] = data4;
+    // data[6] = 0xAF;
+    // data[7] = 0xCF;
+   
+   
 
     serialBT.write(data, sizeof(data));
     package++;
@@ -346,7 +362,7 @@ void setup() {
   mpu.setGyroOffsetX(84);
   mpu.setGyroOffsetY(50);
   mpu.setGyroOffsetZ(84);
-  dataReceived = 0;
+ 
   serialBT.begin("ESP32");
   serialSendInterval = millis();
   btSendInterval = millis();
@@ -362,124 +378,137 @@ int convertVelToPwm(double vel)
   return pwm;
 }
 void loop() {
+  int sizeDecoded = 2;
+  uint8_t dataReceived[sizeDecoded+4];
+  uint8_t dataDecoded[sizeDecoded];
   currentTime = micros();
-  if (Serial.available())
+  if(serialBT.available())
   {
-    option = Serial.readStringUntil('\n');
-    if(option=="zero")
-    {
-      setZero(Zeros, rawAccel);
-    }
-    if(option=="clear")
-    {
-      clearAll();
-     
-    }
-    if(option=="teste1")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(50);
-     
-    }  
-    if(option=="teste2")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(75);
-     
-    } 
-    if(option=="teste3")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(100);
-     
-    } 
-    if(option=="teste4")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(125);
-     
-    }
-    if(option=="teste5")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(150);
-     
-    } 
-    if(option=="teste6")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(175);
-     
-    }  
-    if(option=="teste7")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(200);
-     
-    }   
-    if(option=="teste8")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(225);
-     
-    }
-    if(option=="teste9")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(250);
-     
-    }   
-    if(option=="teste10")
-    {
-      
-      stopAll();
-      counterAB=0;
-      totalCounterAB=0;
-      canRun=true;
-      move(255);
-     
-    }   
-             
-    else option=" ";
-    
-    
+    serialBT.readBytes(dataReceived, sizeDecoded+4);
+    GetDecodeData(dataReceived, dataDecoded, sizeDecoded, Header1, Header2, Tail1, Tail2);
+    Serial.print(char(dataDecoded[0]));
+    Serial.println(char(dataDecoded[1]));
+
   }
+
+  
+  // if (Serial.available())
+  // {
+  //   option = Serial.readStringUntil('\n');
+  //   if(option=="zero")
+  //   {
+  //     setZero(Zeros, rawAccel);
+  //   }
+  //   if(option=="clear")
+  //   {
+  //     clearAll();
+     
+  //   }
+  //   if(option=="teste1")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(50);
+     
+  //   }  
+  //   if(option=="teste2")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(75);
+     
+  //   } 
+  //   if(option=="teste3")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(100);
+     
+  //   } 
+  //   if(option=="teste4")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(125);
+     
+  //   }
+  //   if(option=="teste5")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(150);
+     
+  //   } 
+  //   if(option=="teste6")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(175);
+     
+  //   }  
+  //   if(option=="teste7")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(200);
+     
+  //   }   
+  //   if(option=="teste8")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(225);
+     
+  //   }
+  //   if(option=="teste9")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(250);
+     
+  //   }   
+  //   if(option=="teste10")
+  //   {
+      
+  //     stopAll();
+  //     counterAB=0;
+  //     totalCounterAB=0;
+  //     canRun=true;
+  //     move(255);
+     
+  //   }   
+             
+  //   else option=" ";
+    
+    
+  // }
   
  
   if (currentTime-previousTime>=T*TSAMPLE)

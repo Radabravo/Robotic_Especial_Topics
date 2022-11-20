@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BluetoothApp.Views.SelectDeviceView"
+             xmlns:converters="clr-namespace:BluetoothApp.Services.Converters" >
+
+    <ContentPage.Content>
+        <StackLayout>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="15"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="60"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackLayout
+                    Grid.Column="1"
+                    Grid.Row="1"
+                    IsVisible="{Binding IsConnected, Converter={converters:InverseConverter}}">
+                    <Label Text="Selecione o dispositivo"
+                   
+                   
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                    />
+                    <ListView 
+                     
+                    ItemsSource="{Binding DeviceList}"
+                    SelectedItem="{Binding SelectedDevice}"
+                    x:Name="lvBondedDevices"
+                    >
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <TextCell Text="{Binding Name}"
+                                  TextColor="Black" />
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackLayout>
+                
+                <StackLayout
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"                     
+                    IsVisible="{Binding IsConnected}">
+                    <Picker
+                    VerticalOptions="Start"
+                    ItemsSource="{Binding CommandList}"
+                    SelectedIndex="{Binding SelectedCommand}"
+                    HorizontalOptions="Center"
+                    FontSize="32">
+                    </Picker>
+                    <Button
+                    Text="Comando"
+                    x:Name="btnSend"
+                    Clicked="btnSend_Clicked" 
+                    HorizontalOptions="Center"
+                    Margin="5"/>
+                </StackLayout>
+                <StackLayout
+                IsVisible="{Binding IsConnected}"
+                    Grid.Row="2"
+                    Grid.RowSpan="1"
+                    Grid.Column="2">
+                    <Label Text="Comando Recebido"
+                   FontSize="32"                   
+                   HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding Command, Mode=TwoWay}"
+                   FontSize="32"
+                   HorizontalTextAlignment="Center"                    
+                   VerticalOptions="Fill"/>
+                    <Label Text="Dado Recebido"
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding DataReceived, Mode=TwoWay}"
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" 
+                   VerticalOptions="Fill"/>
+
+                </StackLayout>
+                <Button
+                    Grid.Row="5"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"                   
+                    Text="Conectar"
+                    x:Name="btnConnect"
+                    Clicked="btnConnect_Clicked" 
+                    HorizontalOptions="Center"
+                    Margin="5"/>
+            </Grid>
+            
+
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>
