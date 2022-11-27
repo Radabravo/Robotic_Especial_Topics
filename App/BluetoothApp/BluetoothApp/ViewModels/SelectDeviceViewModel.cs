@@ -17,7 +17,7 @@ namespace BluetoothApp.ViewModels
         private double _dataReceived;
         private bool _isConnected;
         private char _command;
-        private string[] commandList = { "t1", "t2", "t3" };
+        private string[] commandList = { "t1", "t2", "t3","t4", "t5", "t6", "t7", "t8", "t9", "t10"};
         private int _selectedCommand = 0;
 
 
@@ -121,7 +121,19 @@ namespace BluetoothApp.ViewModels
                 OnPropertyChanged(nameof(Command));
             }
         }
-        
+
+        private double avgVel;
+
+        public double AvgVel
+        {
+            get { return avgVel; }
+            set 
+            {
+                avgVel = value;
+                OnPropertyChanged(nameof(AvgVel));
+            }
+        }
+
 
         public readonly IBluetoothAdapter BluetoothAdapter;
 

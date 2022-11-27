@@ -8,6 +8,7 @@
 #include "Decode.h"
 #include "AccVelDisp.h"
 #include <BluetoothSerial.h>
+#include "CarHandling.h"
 
 
 #define TSAMPLE 1000000
@@ -16,6 +17,8 @@
 #define BT_NUM_PACKAGES 100
 
 BluetoothSerial serialBT;
+CarHandling carHandling;
+String command[2];
 
 unsigned long serialSendInterval;
 unsigned long btSendInterval;
@@ -31,6 +34,7 @@ float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,an
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 float avgVel=0;
+int avgVeltoSend=0;
 int count0 = 0,countMvAvg=0;
 bool canRun=false;
 String option;
@@ -56,7 +60,6 @@ volatile int  laps = 0;
 bool dir = false;
 
 //HEADERS
-void  SetSteering(int  steering);
 void setupKalman();
 float LPFilterAlternative(float x, int axis);
 float LPFilterAlternativeFirst(float x, int axis);
@@ -64,9 +67,6 @@ float movingAvgFilter(float x);
 void fitData();
 void setZero(float *Zeros, VectorFloat rawAccel);
 void clearAll();
-void stopAll();
-void goUP(int velocity);
-void goDown(int velocity);
 void SendData_Bluetooth();
 void SendData_Serial();
 //HEADERS
@@ -139,12 +139,13 @@ void SendData_Bluetooth()
     return;
   }
   // Sending 16 bits of data over bluetooth.
-  uint8_t command = 'g';
-  
-  uint8_t data1 = analogData & 0xFF;        //lsb
-  uint8_t data2 = (analogData >> 8) & 0xFF;; 
-  uint8_t data3 = (analogData >> 16)& 0xFF; ; 
-  uint8_t data4 = (analogData >> 24) & 0xFF; // msb
+  avgVeltoSend = (int)(avgVel*1000);
+  uint8_t data1 = avgVeltoSend & 0xFF;        //lsb
+  uint8_t data2 = (avgVeltoSend >> 8) & 0xFF;; 
+  uint8_t data3 = totalCounterAB & 0xFF;        //lsb
+  uint8_t data4 = (totalCounterAB >> 8) & 0xFF;; 
+  uint8_t data5 = (totalCounterAB >> 16)& 0xFF; ; 
+  uint8_t data6 = (totalCounterAB >> 24) & 0xFF; // msb
 
   if (millis() - btSendInterval >= BT_TIME_INTERVAL)
   {
@@ -152,23 +153,14 @@ void SendData_Bluetooth()
 
     data[0] = 0xAB;
     data[1] = 0xCD;
-    data[2] = command;
-    data[3] = command;
-    data[4] = data1;
-    data[5] = data2;
-    data[6] = data3;
-    data[7] = data4;
+    data[2] = data1;
+    data[3] = data2;
+    data[4] = data3;
+    data[5] = data4;
+    data[6] = data5;
+    data[7] = data6;
     data[8] = 0xAF;
     data[9] = 0xCF;
-    // data[0] = 0xAB;
-    // data[1] = 0xCD;
-    // data[2] = data1;
-    // data[3] = data2;
-    // data[4] = data3;
-    // data[5] = data4;
-    // data[6] = 0xAF;
-    // data[7] = 0xCF;
-   
    
 
     serialBT.write(data, sizeof(data));
@@ -195,29 +187,8 @@ void SendData_Serial()
     Serial.println(analogData);
   }
 }
-void stopAll()
-{
-    analogWrite(IN1,0);
-    analogWrite(IN2,0);
-    analogWrite(IN3,0);
-    analogWrite(IN4,0);    
-}
 
-void move(int velocity)
-{
-    
-  if (velocity>=0)
-  {
-    analogWrite(IN1,velocity);
-    analogWrite(IN3,velocity);
-  }
-  else
-  {
-    analogWrite(IN2,velocity);
-    analogWrite(IN4,velocity);
-  }
-    
-} 
+
 
 void setupKalman()
 {
@@ -299,7 +270,6 @@ void fitData()
 
 
 
-Servo steeringControl;
 
 
 void clearAll()
@@ -325,7 +295,7 @@ void clearAll()
   Dx=0;
   Dy=0;
   Dz=0;
-  SetSteering(0);
+  carHandling.SetSteering(0);
   counterAB=0;
 }
 void setZero(float *Zeros, VectorFloat rawAccel)
@@ -337,21 +307,29 @@ void setZero(float *Zeros, VectorFloat rawAccel)
 
 }
 
-void SetSteering(int steering)
-{  
-  steering = map(steering, -512, 512, 0, 180);
-  steeringControl.write(steering);
+
+
+int convertVelToPwm(double vel)
+{
+  // int pwm = (int)((vel+0.0480)/0.0023);
+  // //sem estar no chão
+  // return pwm;
+  // estando no chão
+  int pwm = (int)((vel+0.5250)/0.0093);
+  return pwm;
 }
+
+
 
 
 void setup() {
 
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
- 
-
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   Serial.begin(9600);
-  steeringControl.attach(32);
+  carHandling.SetSteeringMotor(32);
+  
+  carHandling.SetTractionMotor(IN1,IN2,IN3,IN4);
  
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
@@ -366,17 +344,9 @@ void setup() {
   serialBT.begin("ESP32");
   serialSendInterval = millis();
   btSendInterval = millis();
-  stopAll();
+  carHandling.StopAll();
 }
-int convertVelToPwm(double vel)
-{
-  // int pwm = (int)((vel+0.0480)/0.0023);
-  // //sem estar no chão
-  // return pwm;
-  // estando no chão
-  int pwm = (int)((vel+0.5250)/0.0093);
-  return pwm;
-}
+
 void loop() {
   int sizeDecoded = 2;
   uint8_t dataReceived[sizeDecoded+4];
@@ -386,130 +356,37 @@ void loop() {
   {
     serialBT.readBytes(dataReceived, sizeDecoded+4);
     GetDecodeData(dataReceived, dataDecoded, sizeDecoded, Header1, Header2, Tail1, Tail2);
+    
+    command[0] = char(dataDecoded[0]);
+    command[1] = char(dataDecoded[1]);
     Serial.print(char(dataDecoded[0]));
+    Serial.print(command[0]+command[1]);
     Serial.println(char(dataDecoded[1]));
+    if (command[0]+command[1]=="t1")
+    {
+      
+      carHandling.StopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      carHandling.Move(75);
+      
+     
+    }
+    if (command[0]+command[1]=="t2")
+    {
+    
+      carHandling.StopAll();
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      carHandling.Move(50);
+      
+    }
+    
 
   }
-
-  
-  // if (Serial.available())
-  // {
-  //   option = Serial.readStringUntil('\n');
-  //   if(option=="zero")
-  //   {
-  //     setZero(Zeros, rawAccel);
-  //   }
-  //   if(option=="clear")
-  //   {
-  //     clearAll();
-     
-  //   }
-  //   if(option=="teste1")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(50);
-     
-  //   }  
-  //   if(option=="teste2")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(75);
-     
-  //   } 
-  //   if(option=="teste3")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(100);
-     
-  //   } 
-  //   if(option=="teste4")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(125);
-     
-  //   }
-  //   if(option=="teste5")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(150);
-     
-  //   } 
-  //   if(option=="teste6")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(175);
-     
-  //   }  
-  //   if(option=="teste7")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(200);
-     
-  //   }   
-  //   if(option=="teste8")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(225);
-     
-  //   }
-  //   if(option=="teste9")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(250);
-     
-  //   }   
-  //   if(option=="teste10")
-  //   {
-      
-  //     stopAll();
-  //     counterAB=0;
-  //     totalCounterAB=0;
-  //     canRun=true;
-  //     move(255);
-     
-  //   }   
-             
-  //   else option=" ";
-    
-    
-  // }
-  
+   
  
   if (currentTime-previousTime>=T*TSAMPLE)
   {  
@@ -528,7 +405,7 @@ void loop() {
       
       if (stepCount>=5/T)
       {
-        stopAll();
+        carHandling.StopAll();
         canRun=false;
         stepCount=0;
         
@@ -566,12 +443,12 @@ void loop() {
     // Serial.println("Total Pulses: ");
     // Serial.println(((totalCounterAB)));
     // Serial.println("Average speed: ");
-    // Serial.println(((avgVel)), 5);
+    Serial.println(((avgVel)), 5);
+    SendData_Bluetooth();
     
   } 
-  analogData = counterAB;
-  SendData_Bluetooth();
+  
+  
   //SendData_Serial();
 
 }
-

@@ -12,7 +12,7 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="350"/>
                     <RowDefinition Height="60"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
@@ -71,10 +71,10 @@
                     Grid.Row="2"
                     Grid.RowSpan="1"
                     Grid.Column="2">
-                    <Label Text="Comando Recebido"
+                    <Label Text="Velocidade Média"
                    FontSize="32"                   
                    HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding Command, Mode=TwoWay}"
+                    <Label Text="{Binding AvgVel, Mode=TwoWay, StringFormat='{0:F3}'}"                                                    
                    FontSize="32"
                    HorizontalTextAlignment="Center"                    
                    VerticalOptions="Fill"/>

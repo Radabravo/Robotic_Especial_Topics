@@ -80,8 +80,15 @@ namespace BluetoothApp.Services.Protocol
                 {
                     dataFrame.Add(buffer[start_index + i]);
                 }
-
-                OnDataFormatedEvent?.Invoke(dataFrame);
+                if (dataFrame.Count==0)
+                {
+                    buffer.Clear();
+                }
+                else
+                {
+                    OnDataFormatedEvent?.Invoke(dataFrame);
+                }
+                
 
                 return true;
             }

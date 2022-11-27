@@ -111,10 +111,14 @@ namespace BluetoothApp.Views
 
         private void OnDataFormatted(IEnumerable<byte> data)
         {
+            var aux = new byte[4] {0,0,0,0};
+            aux[0] = data.ElementAt(0);
+            aux[1] = data.ElementAt(1);
+            
             var model = BindingContext as SelectDeviceViewModel;           
-            var command = (char)data.ElementAt(0);
+            var avgValue = BitConverter.ToInt32(aux,0);
             var convert = BitConverter.ToInt32(data.ToArray(), 2);
-            model.Command = command;
+            model.AvgVel = (double)(avgValue)/1000;
             model.DataReceived = convert;
         }
 
