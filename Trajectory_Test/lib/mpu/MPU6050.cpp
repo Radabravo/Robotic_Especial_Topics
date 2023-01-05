@@ -382,7 +382,7 @@ VectorFloat MPU6050::readRawAccel(void)
 VectorFloat MPU6050::convertVectors(Vector intVector)
 {
   VectorFloat floatVector;
-  floatVector.XAxis=intVector.XAxis*S;
+  floatVector.XAxis=intVector.XAxis*S; 
   floatVector.YAxis=intVector.YAxis*S;
   floatVector.ZAxis=intVector.ZAxis*S;
   return floatVector;
@@ -411,7 +411,7 @@ VectorFloat MPU6050::readScaledAccel(void)
 }
 
 
-VectorFloat MPU6050::readRawGyro(void)
+Vector MPU6050::readRawGyro(void)
 {
     Wire.beginTransmission(mpuAddress);
     #if ARDUINO >= 100
@@ -429,10 +429,11 @@ VectorFloat MPU6050::readRawGyro(void)
     #if ARDUINO >= 100
 	int16_t xha = Wire.read();
 	int16_t xla = Wire.read();
-        int16_t yha = Wire.read();
+    int16_t yha = Wire.read();
 	int16_t yla = Wire.read();
 	int16_t zha = Wire.read();
 	int16_t zla = Wire.read();
+    
     #else
 	int16_t xha = Wire.receive();
 	int16_t xla = Wire.receive();
@@ -445,9 +446,10 @@ VectorFloat MPU6050::readRawGyro(void)
     rg.XAxis = xha << 8 | xla;
     rg.YAxis = yha << 8 | yla;
     rg.ZAxis = zha << 8 | zla;
+    
 
-    rgfloat=convertVectors(rg);
-    return rgfloat;
+    //rgfloat=convertVectors(rg);
+    return rg;
 }
 
 VectorFloat MPU6050::readNormalizeGyro(void)

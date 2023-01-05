@@ -61,7 +61,7 @@ namespace BluetoothApp.Views
                         lvBondedDevices.IsEnabled = false;
                         //await Navigation.PushAsync(new DataMonitorView());
                         device.IsConnected = true;
-
+                        sendStop();
 
 
                     }
@@ -74,9 +74,13 @@ namespace BluetoothApp.Views
                         btnConnect.Text = "Conectar";
                         _isConnected = false;
                         lvBondedDevices.IsEnabled = true;
-                        device.DataReceived = 0;
+                        device.RealDisplacement = 0;
+                        device.CalculateDisplacement = 0;
+                        device.DyMPU = 0;
+                        device.DxMPU= 0;
                         device.Command = 'f';
                         device.IsConnected = false;
+                        sendStop();
                     }
                     catch (Exception ex)
                     {
@@ -111,15 +115,47 @@ namespace BluetoothApp.Views
 
         private void OnDataFormatted(IEnumerable<byte> data)
         {
-            var aux = new byte[4] {0,0,0,0};
-            aux[0] = data.ElementAt(0);
-            aux[1] = data.ElementAt(1);
-            
+            var data1 = new byte[4] {0,0,0,0};
+            data1[0] = data.ElementAt(0);
+            data1[1] = data.ElementAt(1);
+            var data2 = new byte[4] { 0, 0, 0, 0 };
+            data2[0] = data.ElementAt(2);
+            data2[1] = data.ElementAt(3);
+            var data3 = new byte[4] { 0, 0, 0, 0 };
+            data3[0] = data.ElementAt(4);
+            data3[1] = data.ElementAt(5);
+            var signalDy = data.ElementAt(6)==0?1:-1;
+            var data4 = new byte[4] { 0, 0, 0, 0 };
+            data4[0] = data.ElementAt(7);
+            data4[1] = data.ElementAt(8);
+            var signalDx = data.ElementAt(9) == 0 ? 1 : -1;
+
             var model = BindingContext as SelectDeviceViewModel;           
-            var avgValue = BitConverter.ToInt32(aux,0);
-            var convert = BitConverter.ToInt32(data.ToArray(), 2);
+            var avgValue = BitConverter.ToInt32(data1,0);
+            var calculateDisplacement = BitConverter.ToInt32(data2,0);
+            var dyMPU = BitConverter.ToInt32(data3,0);
+            var dxMPU = BitConverter.ToInt32(data4,0);
+            var convert = BitConverter.ToInt32(data.ToArray(), 10);
             model.AvgVel = (double)(avgValue)/1000;
-            model.DataReceived = convert;
+            model.CalculateDisplacement= (double)(calculateDisplacement)/1000;
+            model.DyMPU = (double)(dyMPU)/1000*signalDy;
+            model.DxMPU = (double)(dxMPU)/1000*signalDx;
+            //var aux = ((double)(convert)) * 0.033 * 2 * Math.PI / 520;
+            model.RealDisplacement = ((double)(convert))*0.033*2*Math.PI/520;
+        }
+
+        private void sendStop()
+        {
+            byte[] data = new byte[6];
+            var command1 = 's';
+            var command2 = 't';
+            data[0] = 0xAB;
+            data[1] = 0xCD;
+            data[2] = (byte)command1;
+            data[3] = (byte)command2;
+            data[4] = 0xAF;
+            data[5] = 0xCF;
+            _currentConnection.Transmit(data);
         }
 
         private void btnSend_Clicked(object sender, EventArgs e)

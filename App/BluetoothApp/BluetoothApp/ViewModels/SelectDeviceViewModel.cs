@@ -14,7 +14,7 @@ namespace BluetoothApp.ViewModels
     {
         private ObservableCollection<BluetoothDeviceModel> _deviceList;
         private BluetoothDeviceModel _selectedDevice;
-        private double _dataReceived;
+        private double _realDisplacement;
         private bool _isConnected;
         private char _command;
         private string[] commandList = { "t1", "t2", "t3","t4", "t5", "t6", "t7", "t8", "t9", "t10"};
@@ -89,16 +89,16 @@ namespace BluetoothApp.ViewModels
                 OnPropertyChanged(nameof(SelectedDevice));
             }
         }
-        public double DataReceived
+        public double RealDisplacement
         {
             get
             {
-                return _dataReceived;
+                return _realDisplacement;
             }
             set
             {
-                _dataReceived = value;
-                OnPropertyChanged(nameof(DataReceived));
+                _realDisplacement = value;
+                OnPropertyChanged(nameof(RealDisplacement));
             }
         }
 
@@ -122,18 +122,51 @@ namespace BluetoothApp.ViewModels
             }
         }
 
-        private double avgVel;
+        private double _avgVel;
 
         public double AvgVel
         {
-            get { return avgVel; }
+            get { return _avgVel; }
             set 
             {
-                avgVel = value;
+                _avgVel = value;
                 OnPropertyChanged(nameof(AvgVel));
             }
         }
 
+        private double _dyMPU;
+
+        public double DyMPU
+        {
+            get { return _dyMPU; }
+            set 
+            {
+                _dyMPU = value;
+                OnPropertyChanged(nameof(DyMPU));
+            }
+        }
+        private double _dxMPU;
+
+        public double DxMPU
+        {
+            get { return _dxMPU; }
+            set
+            {
+                _dxMPU = value;
+                OnPropertyChanged(nameof(DxMPU));
+            }
+        }
+        private double _calculateDisplacement;
+
+        public double CalculateDisplacement 
+        {
+            get { return _calculateDisplacement; }
+            set
+            {
+                _calculateDisplacement = value;
+                OnPropertyChanged(nameof(CalculateDisplacement));
+            }
+        }
 
         public readonly IBluetoothAdapter BluetoothAdapter;
 

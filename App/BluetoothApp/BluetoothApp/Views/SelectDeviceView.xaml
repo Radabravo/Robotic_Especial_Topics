@@ -9,10 +9,10 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="15"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="350"/>
+                    <RowDefinition Height="300"/>
+                    <RowDefinition Height="100"/>
+                    <RowDefinition Height="100"/>
+                    <RowDefinition Height="100"/>
                     <RowDefinition Height="60"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
@@ -48,7 +48,8 @@
                 </StackLayout>
                 
                 <StackLayout
-                    Grid.Row="1"
+                    Grid.Row="3"
+                    Grid.RowSpan="2"
                     Grid.Column="0"
                     Grid.ColumnSpan="3"                     
                     IsVisible="{Binding IsConnected}">
@@ -68,34 +69,85 @@
                 </StackLayout>
                 <StackLayout
                 IsVisible="{Binding IsConnected}"
-                    Grid.Row="2"
+                    Grid.Row="1"
                     Grid.RowSpan="1"
                     Grid.Column="2">
                     <Label Text="Velocidade Média"
                    FontSize="32"                   
                    HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding AvgVel, Mode=TwoWay, StringFormat='{0:F3}'}"                                                    
+                    <Label                                                     
                    FontSize="32"
                    HorizontalTextAlignment="Center"                    
-                   VerticalOptions="Fill"/>
-                    <Label Text="Dado Recebido"
+                   VerticalOptions="Fill">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding AvgVel, Mode=TwoWay, StringFormat='{0:F3}'}"/>
+                                <Span Text=" m/s"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Label Text="Deslocamento Real"
                    FontSize="32"
                    HorizontalTextAlignment="Center" />
-                    <Label Text="{Binding DataReceived, Mode=TwoWay}"
+                    <Label 
                    FontSize="32"
                    HorizontalTextAlignment="Center" 
-                   VerticalOptions="Fill"/>
+                   VerticalOptions="Fill">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding RealDisplacement, Mode=TwoWay, StringFormat='{0:F3}'}"/>
+                                <Span Text=" m"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Label Text="Deslocamento Calculado"
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" />
+                    <Label 
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" 
+                   VerticalOptions="Fill">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="{Binding CalculateDisplacement, Mode=TwoWay,  StringFormat='{0:F3}'}"/>
+                                <Span Text=" m"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                    <Label Text="MPU"
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" />
+                    <Label 
+                   FontSize="32"
+                   HorizontalTextAlignment="Center" 
+                   VerticalOptions="Fill">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text=" Dy "/>
+                                <Span Text="{Binding DyMPU, Mode=TwoWay,  StringFormat='{0:F2}'}"/>
+                                <Span Text=" m / "/>
+                                <Span Text=" Dx "/>
+                                <Span Text="{Binding DxMPU, Mode=TwoWay,  StringFormat='{0:F2}'}"/>
+                                <Span Text=" m"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
 
                 </StackLayout>
-                <Button
-                    Grid.Row="5"
+                <StackLayout
+                    Grid.Row="6"
                     Grid.Column="0"
-                    Grid.ColumnSpan="3"                   
+                    Grid.ColumnSpan="3">
+                   
+                    <Button
+                                     
                     Text="Conectar"
                     x:Name="btnConnect"
                     Clicked="btnConnect_Clicked" 
                     HorizontalOptions="Center"
                     Margin="5"/>
+                </StackLayout>
+                   
             </Grid>
             
 
