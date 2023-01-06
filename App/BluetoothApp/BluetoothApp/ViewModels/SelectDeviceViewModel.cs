@@ -167,6 +167,18 @@ namespace BluetoothApp.ViewModels
                 OnPropertyChanged(nameof(CalculateDisplacement));
             }
         }
+        private int _avgPWM;
+
+        public int AvgPWM
+        {
+            get { return _avgPWM; }
+            set 
+            {
+                _avgPWM = value;
+                OnPropertyChanged(nameof(AvgPWM));
+            }
+        }
+
 
         public readonly IBluetoothAdapter BluetoothAdapter;
 

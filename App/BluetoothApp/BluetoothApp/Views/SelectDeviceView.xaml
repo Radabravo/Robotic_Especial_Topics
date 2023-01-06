@@ -82,7 +82,9 @@
                         <Label.FormattedText>
                             <FormattedString>
                                 <Span Text="{Binding AvgVel, Mode=TwoWay, StringFormat='{0:F3}'}"/>
-                                <Span Text=" m/s"/>
+                                <Span Text=" m/s / "/>
+                                <Span Text="{Binding AvgPWM, Mode=TwoWay, StringFormat='{0}'}"/>
+                                <Span Text=" PWM"/>
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>

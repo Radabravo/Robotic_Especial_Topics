@@ -20,11 +20,13 @@ namespace BluetoothApp.Views
         private bool _isConnected;
         public Action change;
         private IBluetoothManagedConnection _currentConnection;
+        private List<int> PWM;
         public SelectDeviceView()
         {
             InitializeComponent();
 
             BindingContext = new SelectDeviceViewModel();
+            PWM = new List<int>();
             UpdateUI();
 
             _protocolDecode = new ProtocolDecode(0xAB, 0xCD, 0xAF, 0xCF);
@@ -129,17 +131,24 @@ namespace BluetoothApp.Views
             data4[0] = data.ElementAt(7);
             data4[1] = data.ElementAt(8);
             var signalDx = data.ElementAt(9) == 0 ? 1 : -1;
+            PWM.Add(data.ElementAt(10));
+            int avgPWM = 0;
+            if (PWM.Count()>0)
+            {
+                avgPWM = (int)PWM.Average();
+            }
 
             var model = BindingContext as SelectDeviceViewModel;           
             var avgValue = BitConverter.ToInt32(data1,0);
             var calculateDisplacement = BitConverter.ToInt32(data2,0);
             var dyMPU = BitConverter.ToInt32(data3,0);
             var dxMPU = BitConverter.ToInt32(data4,0);
-            var convert = BitConverter.ToInt32(data.ToArray(), 10);
+            var convert = BitConverter.ToInt32(data.ToArray(), 11);
             model.AvgVel = (double)(avgValue)/1000;
             model.CalculateDisplacement= (double)(calculateDisplacement)/1000;
             model.DyMPU = (double)(dyMPU)/1000*signalDy;
             model.DxMPU = (double)(dxMPU)/1000*signalDx;
+            model.AvgPWM = avgPWM;
             //var aux = ((double)(convert)) * 0.033 * 2 * Math.PI / 520;
             model.RealDisplacement = ((double)(convert))*0.033*2*Math.PI/520;
         }
@@ -155,6 +164,7 @@ namespace BluetoothApp.Views
             data[3] = (byte)command2;
             data[4] = 0xAF;
             data[5] = 0xCF;
+            PWM.Clear();
             _currentConnection.Transmit(data);
         }
 
@@ -170,6 +180,7 @@ namespace BluetoothApp.Views
             data[3] = (byte)command2;            
             data[4] = 0xAF;
             data[5] = 0xCF;
+            PWM.Clear();
             _currentConnection.Transmit(data);
         }
     }

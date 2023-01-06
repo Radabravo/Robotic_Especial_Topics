@@ -25,15 +25,15 @@ String command[2];
 #define MIN_PWM 0
 #define MAX_PWM 255
 #define KP 1.2
-#define KI 0.6
-#define KD 0.02
+#define KI 1
+#define KD 0.002
 
 
 // Variáveis do Sensor Infravermelho e PID
 double Input;
 volatile byte pulsos;
 unsigned long timeold;
-unsigned long timerInterval;
+
 int pinoSensor = 2;               //Pino do Arduino ligado ao pino D0 do sensor
 unsigned int pulsosDisco = 520;    //Altere o valor conforme disco encoder
 double Output = 0;
@@ -51,13 +51,13 @@ uint32_t package = 0;
 const double T= 0.05;
 const int MPU = 0x68; //ICD address
 float AcX[2], AcY[2],AcZ[2], Tmp, GyX[2],GyY[2],GyZ[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0,Zeros[3];// Dados do MPU
-unsigned long currentTime=0,previousTime=0;
+unsigned long currentTime=0, timeTrajectory=0;
 int stepCount=0,stepCount1=0;
 float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,ang_accelXY,vang_gyroZ,ang_kalmanXY;
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 float avgVel=0;
-int trajectoryDuration = 5;
+double trajectoryDuration = 7.8;
 int countX=0,countY = 0,countMvAvg=0;
 bool canRun=false;
 String option;
@@ -165,26 +165,27 @@ void SendData_Bluetooth()
   // Sending 16 bits of data over bluetooth.
   int avgVeltoSend = (int)(abs(Input)*1000);
   int calculateDisplacement = (int)(trajectoryDuration*velocidadeSetpointToSend*1000); 
-  int sendDy = (int)(abs(Dy)*1000); 
-  int sendDx = (int)(abs(Dx)*1000); 
-  uint8_t data1 = avgVeltoSend & 0xFF;        //lsb
+  int sendDy = (int)(abs(Dy)*10000); 
+  int sendDx = (int)(abs(Dx)*10000); 
+  uint8_t data1 = avgVeltoSend & 0xFF;        
   uint8_t data2 = (avgVeltoSend >> 8) & 0xFF;
   uint8_t data3 = calculateDisplacement& 0xFF;
   uint8_t data4 = (calculateDisplacement >> 8) & 0xFF;  
-  uint8_t data5 = sendDy & 0xFF;        //lsb
+  uint8_t data5 = sendDy & 0xFF;        
   uint8_t data6 = (sendDy >> 8) & 0xFF;
   uint8_t data7 = Dy>0 ? 0 : 1;
   uint8_t data8 = sendDx & 0xFF;
   uint8_t data9 = (sendDx >> 8) & 0xFF;  
   uint8_t data10 = Dx>0 ? 0 : 1; 
-  uint8_t data11 = totalCounterAB & 0xFF;        //lsb
-  uint8_t data12 = (totalCounterAB >> 8) & 0xFF;; 
-  uint8_t data13 = (totalCounterAB >> 16)& 0xFF; ; 
-  uint8_t data14 = (totalCounterAB >> 24) & 0xFF; // msb
+  uint8_t data11 = convertVelToPwm(Input); 
+  uint8_t data12 = totalCounterAB & 0xFF;        
+  uint8_t data13 = (totalCounterAB >> 8) & 0xFF;; 
+  uint8_t data14 = (totalCounterAB >> 16)& 0xFF; 
+  uint8_t data15 = (totalCounterAB >> 24) & 0xFF; 
 
   if (millis() - btSendInterval >= BT_TIME_INTERVAL)
   {
-    uint8_t data[18];
+    uint8_t data[19];
 
     data[0] = 0xAB;
     data[1] = 0xCD;
@@ -202,8 +203,9 @@ void SendData_Bluetooth()
     data[13] = data12;
     data[14] = data13;
     data[15] = data14;
-    data[16] = 0xAF;
-    data[17] = 0xCF;
+    data[16] = data15;
+    data[17] = 0xAF;
+    data[18] = 0xCF;
    
 
     serialBT.write(data, sizeof(data));
@@ -362,6 +364,11 @@ int convertVelToPwm(double vel)
   // int pwm = (int)((vel+0.0480)/0.0023);
   
   // estando no chão
+  if (vel<0.01 && !canRun)
+  {
+    vel = - 0.2333;
+  }
+  
   int pwm = (int)((vel+0.2333)/0.0130);
   if (pwm<0)
   {
@@ -406,7 +413,7 @@ void loop() {
   int sizeDecoded = 2;
   uint8_t dataReceived[sizeDecoded+4];
   uint8_t dataDecoded[sizeDecoded];
-  currentTime = micros();
+  
   if(serialBT.available())
   {
     serialBT.readBytes(dataReceived, sizeDecoded+4);
@@ -422,8 +429,8 @@ void loop() {
       counterAB=0;
       totalCounterAB=0;
       canRun=true;
-      timeold = millis();
-      timerInterval = millis();
+      timeold = micros();
+      timeTrajectory = timeold;
       velocidadeSetpoint = 0.25;
       velocidadeSetpointToSend = velocidadeSetpoint;
       clearAll();
@@ -440,9 +447,9 @@ void loop() {
       counterAB=0;
       totalCounterAB=0;
       canRun=true;
-      timeold = millis();
-      timerInterval = millis();
-      velocidadeSetpoint = 0.50;
+      timeold = micros();
+      timeTrajectory = timeold;
+      velocidadeSetpoint = 0.45;
       velocidadeSetpointToSend = velocidadeSetpoint;
       clearAll();
       
@@ -455,9 +462,9 @@ void loop() {
       counterAB=0;
       totalCounterAB=0;
       canRun=true;
-      timeold = millis();
-      timerInterval = millis();
-      velocidadeSetpoint = 0.75;
+      timeold = micros();
+      timeTrajectory = timeold; 
+      velocidadeSetpoint = 0.65;
       velocidadeSetpointToSend = velocidadeSetpoint;
       clearAll();
       
@@ -470,9 +477,9 @@ void loop() {
       counterAB=0;
       totalCounterAB=0;
       canRun=true;
-      timeold = millis();
-      timerInterval = millis();
-      velocidadeSetpoint = 1;
+      timeold = micros();
+      timeTrajectory = timeold;
+      velocidadeSetpoint = 0.85;
       velocidadeSetpointToSend = velocidadeSetpoint;
       clearAll();
       
@@ -485,12 +492,39 @@ void loop() {
       counterAB=0;
       totalCounterAB=0;
       canRun=true;
-      timeold = millis();
-      timerInterval = millis();
+      timeold = micros();
+      timeTrajectory = timeold;
+      velocidadeSetpoint = 1.05;
+      velocidadeSetpointToSend = velocidadeSetpoint;
+      clearAll();
+      
+    }
+    else if (command[0]+command[1]=="t6")
+    {
+    
+     
+     
+      counterAB=0;
+      totalCounterAB=0;
+      canRun=true;
+      timeold = micros();
+      timeTrajectory = timeold;
       velocidadeSetpoint = 1.25;
       velocidadeSetpointToSend = velocidadeSetpoint;
       clearAll();
       
+    }
+    else if (command[0]+command[1]=="t9")
+    {
+      canRun=false;
+      velocidadeSetpoint = 0;    
+      velocidadeSetpointToSend = velocidadeSetpoint; 
+      timeold =micros();
+      timeTrajectory = timeold;
+      counterAB = 0;
+      totalCounterAB = 0;
+      clearAll();
+      setZero(Zeros, rawAccel);
     }
     
     else if (command[0]+command[1]=="st")
@@ -498,8 +532,8 @@ void loop() {
       canRun=false;
       velocidadeSetpoint = 0;    
       velocidadeSetpointToSend = velocidadeSetpoint; 
-      timeold = millis();
-      timerInterval = millis();
+      timeold = micros();
+      timeTrajectory = timeold;
       counterAB = 0;
       totalCounterAB = 0;
       clearAll();
@@ -509,8 +543,8 @@ void loop() {
       canRun = false;
       velocidadeSetpoint = 0;    
       velocidadeSetpointToSend = velocidadeSetpoint; 
-      timeold = millis();
-      timerInterval = millis();
+      timeold = micros();
+      timeTrajectory = timeold;
       counterAB = 0;
       totalCounterAB = 0;
       clearAll();
@@ -519,33 +553,39 @@ void loop() {
 
   }
    
- 
-  if (currentTime-previousTime>=T*TSAMPLE)
+  if (micros()-timeTrajectory>=trajectoryDuration*TSAMPLE && canRun)
+  {
+    timeTrajectory=micros();
+    velocidadeSetpoint=0;
+    canRun=false;
+  }
+  
+  if (micros()-currentTime>=T*TSAMPLE)
   {  
-    if(canRun)
-    {
+    // if(canRun)
+    // {
       
-      stepCount++;
+    //   stepCount++;
     
       
     
       
-      if (stepCount>=5/T)
-      {
-        //carHandling.StopAll();
-        canRun=false;
-        stepCount=0;
-        velocidadeSetpoint=0;
+    //   if (stepCount>=5/T)
+    //   {
+    //     //carHandling.StopAll();
+    //     canRun=false;
+    //     stepCount=0;
         
-      }
+        
+    //   }
       
       
-    }
+    // }
    
     rawAccel=mpu.readRawAccel();
     rawGyro=mpu.readNormalizeGyro();
 
-    previousTime=currentTime;
+    currentTime=micros();
 
     fitData();    
     ang_accelXZ = atan2(rawAccel.XAxis, rawAccel.ZAxis)*180/PI;
@@ -560,19 +600,27 @@ void loop() {
     ang_kalmanYZ = FiltroKalmanYZ.getAngle(ang_accelYZ,vang_gyroX,T);
     ang_kalmanXY = FiltroKalmanXY.getAngle(ang_accelXY,vang_gyroZ,T);
   
-    AcY[1]=rawAccel.YAxis- sin(ang_kalmanYZ*PI/180);
-    AcX[1]= rawAccel.XAxis - sin(ang_kalmanXZ*PI/180);
+   
     AcX[1]*=9.80665;
     AcY[1]*=9.80665;
     AcY[1]=LPFilterAlternativeFirst(AcY[1],1);
     AcX[1]=LPFilterAlternativeFirst(AcX[1],1);
-    velocity((AcY),&Vy[1],&countY, T);
-    velocity((AcX), &Vx[1],&countX, T);
+    AcY[1]=rawAccel.YAxis- sin(ang_kalmanYZ*PI/180);
+    AcX[1]= rawAccel.XAxis - sin(ang_kalmanXZ*PI/180);
+    //float avgVY= movingAvgFilter(AcY[1]);
+    velocity((AcY),&Vy[1],&countY, T, canRun);
+    velocity((AcX), &Vx[1],&countX, T, canRun);
     displacement(Vy,&Dy, T, dir);
-    displacement(Vx,&Dx, T, dir);
-    Serial.print(AcX[1]);Serial.print(",");
-    Serial.print(Vx[1]);Serial.print(",");
-    Serial.println(Dx);
+    if (vang_gyroZ>0)
+    {
+      displacement(Vx,&Dx, T, true);
+    }
+    else   displacement(Vx,&Dx, T, false);
+    
+    
+    //Serial.print(AcY[1]);Serial.print(",");
+    Serial.print(velocidadeSetpoint);Serial.print(",");
+    Serial.println(Input);
     
     // Serial.print(ang_kalmanYZ);Serial.print(",");
     // Serial.println(ang_kalmanXZ);
@@ -585,34 +633,27 @@ void loop() {
     
   } 
 
-  if (millis()-timeold>=100)
+  
+  
+  motorPID.Compute();
+  // Ajusta PWM no motor
+  carHandling.Move(convertVelToPwm (Output));   // Utiliza velocidade calculada
+
+  if (micros()-timeold>=100000)
   {
     detachInterrupt(34);
     detachInterrupt(35);    //Desabilita interrupção durante o cálculo para evitar sair do IF
     
     Input = ((2*PI*0.033*counterAB/52));
-    timeold = millis();
+    timeold = micros();
     pulsos = 0;
-    
    
-    // Exibe valores no serial monitor
-    // Serial.print("Vel: ");
-    // Serial.print(Output, 2);
-    // Serial.print("    ");
-    // Serial.print("Input: ");
-    // Serial.println(Input, 2);
-    // Serial.print("PWM: ");
-    // Serial.println((convertVelToPwm (Output)));
+   
     counterAB = 0;
     
     // Habilita novamente a interrupção
     attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
     attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   }
-  
-  motorPID.Compute();
-  // Ajusta PWM no motor
-  carHandling.Move(convertVelToPwm (Output));   // Utiliza velocidade calculada
-  
 
 }
