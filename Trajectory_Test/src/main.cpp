@@ -57,7 +57,7 @@ float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,an
 float y_pass_alt[3][3], x_pass_alt[3][3];
 float movAvg[10];
 float avgVel=0;
-double trajectoryDuration = 7.8;
+double trajectoryDuration = 5;
 int countX=0,countY = 0,countMvAvg=0;
 bool canRun=false;
 String option;
@@ -229,7 +229,7 @@ void SendData_Serial()
   if (millis() - serialSendInterval >= SERIAL_TIME_INTERVAL)
   {
     serialSendInterval = millis();
-    Serial.println(analogData);
+    
   }
 }
 
@@ -410,7 +410,7 @@ void setup() {
 }
 
 void loop() {
-  int sizeDecoded = 2;
+  int sizeDecoded = 6;
   uint8_t dataReceived[sizeDecoded+4];
   uint8_t dataDecoded[sizeDecoded];
   
@@ -421,6 +421,11 @@ void loop() {
     
     command[0] = char(dataDecoded[0]);
     command[1] = char(dataDecoded[1]);
+    int timeSet = int((unsigned char)(dataDecoded[2]) << 24 |
+            (unsigned char)(dataDecoded[3]) << 16 |
+            (unsigned char)(dataDecoded[4]) << 8 |
+            (unsigned char)(dataDecoded[5]));
+    trajectoryDuration = (double(timeSet)/1000);
     
     if (command[0]+command[1]=="t1")
     {
@@ -619,8 +624,8 @@ void loop() {
     
     
     //Serial.print(AcY[1]);Serial.print(",");
-    Serial.print(velocidadeSetpoint);Serial.print(",");
-    Serial.println(Input);
+    // Serial.print(velocidadeSetpoint);Serial.print(",");
+    // Serial.println(Input);
     
     // Serial.print(ang_kalmanYZ);Serial.print(",");
     // Serial.println(ang_kalmanXZ);

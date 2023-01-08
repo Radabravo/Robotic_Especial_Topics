@@ -3,6 +3,7 @@ using BluetoothApp.ViewModels;
 using Plugin.BluetoothClassic.Abstractions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -170,16 +171,23 @@ namespace BluetoothApp.Views
 
         private void btnSend_Clicked(object sender, EventArgs e)
         {
+            double _setTime = 0.0;
+            double.TryParse(setTime.Text,out _setTime);
+            byte[] message = BitConverter.GetBytes(((int)(_setTime * 1000)));
             var model = BindingContext as SelectDeviceViewModel;
-            byte[] data = new byte[6];
+            byte[] data = new byte[10];
             var command1 = model.CommandList[model.SelectedCommand][0];
             var command2 = model.CommandList[model.SelectedCommand][1];
             data[0] = 0xAB;
             data[1] = 0xCD;
             data[2] = (byte)command1;
-            data[3] = (byte)command2;            
-            data[4] = 0xAF;
-            data[5] = 0xCF;
+            data[3] = (byte)command2;
+            data[4] = message[3];
+            data[5] = message[2];
+            data[6] = message[1];
+            data[7] = message[0];            
+            data[8] = 0xAF;
+            data[9] = 0xCF;
             PWM.Clear();
             _currentConnection.Transmit(data);
         }
