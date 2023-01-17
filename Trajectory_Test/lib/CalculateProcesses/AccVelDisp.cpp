@@ -14,7 +14,7 @@ void velocity(float *Ac,float *velo,int *count0, double T, bool canRun)
   {
   
 
-    if(abs(Ac[1])>0.01)
+    if(abs(Ac[1])>0.02)
     {
       if(*velo==0)
       {

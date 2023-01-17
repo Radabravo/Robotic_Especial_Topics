@@ -180,6 +180,32 @@ namespace BluetoothApp.ViewModels
         }
 
 
+        private int _steeringAngle;
+
+        public int SteeringAngle
+        {
+            get { return _steeringAngle; }
+            set 
+            {
+                _steeringAngle = value;
+                OnPropertyChanged(nameof(SteeringAngle));
+            }
+        }
+
+        private int _encoder;
+
+        public int Encoder
+        {
+            get { return _encoder; }
+            set 
+            {
+                _encoder = value;
+                OnPropertyChanged(nameof(Encoder));
+            }
+        }
+
+
+
         public readonly IBluetoothAdapter BluetoothAdapter;
 
         public event PropertyChangedEventHandler PropertyChanged;

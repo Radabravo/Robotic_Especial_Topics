@@ -24,8 +24,8 @@ String command[2];
 // Constantes do Controle PID
 #define MIN_PWM 0
 #define MAX_PWM 255
-#define KP 1.2
-#define KI 1
+#define KP 1.3
+#define KI 1.15
 #define KD 0.002
 
 
@@ -37,7 +37,7 @@ unsigned long timeold;
 int pinoSensor = 2;               //Pino do Arduino ligado ao pino D0 do sensor
 unsigned int pulsosDisco = 520;    //Altere o valor conforme disco encoder
 double Output = 0;
-double velocidadeSetpoint = 0;  // Alterar conforme velocidade desejada
+double velocidadeSetpoint = 0;  // Alterar conforme velocidade desejadavo
 double velocidadeSetpointToSend = 0;
 
 // Cria PID para controle
@@ -340,7 +340,7 @@ void clearAll()
   Dx=0;
   Dy=0;
   Dz=0;
-  carHandling.SetSteering(0);
+  //carHandling.SetSteering(90);
   counterAB=0;
 }
 void setZero(float *Zeros, VectorFloat rawAccel)
@@ -389,10 +389,10 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   Serial.begin(9600);
-  carHandling.SetSteeringMotor(32);
+  carHandling.SetSteeringMotor(25);
   velocidadeSetpoint=0;
   carHandling.SetTractionMotor(IN1,IN2,IN3,IN4);
- 
+  carHandling.SetSteering(90);
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
   {
     Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
@@ -410,7 +410,7 @@ void setup() {
 }
 
 void loop() {
-  int sizeDecoded = 6;
+  int sizeDecoded = 10;
   uint8_t dataReceived[sizeDecoded+4];
   uint8_t dataDecoded[sizeDecoded];
   
@@ -425,8 +425,13 @@ void loop() {
             (unsigned char)(dataDecoded[3]) << 16 |
             (unsigned char)(dataDecoded[4]) << 8 |
             (unsigned char)(dataDecoded[5]));
+    int angleSet = int((unsigned char)(dataDecoded[6]) << 24 |
+            (unsigned char)(dataDecoded[7]) << 16 |
+            (unsigned char)(dataDecoded[8]) << 8 |
+            (unsigned char)(dataDecoded[9]));
     trajectoryDuration = (double(timeSet)/1000);
-    
+    //Serial.println(angleSet);
+    carHandling.SetSteering(angleSet);
     if (command[0]+command[1]=="t1")
     {
       
@@ -540,7 +545,7 @@ void loop() {
       timeold = micros();
       timeTrajectory = timeold;
       counterAB = 0;
-      totalCounterAB = 0;
+      
       clearAll();
     }
     else 
@@ -624,8 +629,8 @@ void loop() {
     
     
     //Serial.print(AcY[1]);Serial.print(",");
-    // Serial.print(velocidadeSetpoint);Serial.print(",");
-    // Serial.println(Input);
+    Serial.print(velocidadeSetpoint);Serial.print(",");
+    Serial.println(Input);
     
     // Serial.print(ang_kalmanYZ);Serial.print(",");
     // Serial.println(ang_kalmanXZ);

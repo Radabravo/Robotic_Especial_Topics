@@ -22,8 +22,8 @@ void CarHandling::SetSteeringMotor(int _SteeringPin)
 }
 void CarHandling::SetSteering(int steering)
 {
-    Serial.println(steering);
-    steering = map(steering, -512, 512, 0, 180);
+    //Serial.println(steering);
+    steering = map(steering, 0, 180, 0, 180);
     steeringControl.write(steering);
 }
 void CarHandling::Move(int Vel)
