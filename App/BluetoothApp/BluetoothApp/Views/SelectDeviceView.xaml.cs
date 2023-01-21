@@ -215,30 +215,37 @@ namespace BluetoothApp.Views
         public void SendCommand(bool isStop)
         {
             double _setTime = 0.0;
+            double _setVel = 0.0;
             double.TryParse(setTime.Text, out _setTime);
+            double.TryParse(setVelocity.Text,out _setVel);
             int.TryParse(setAngle.Text, out _setAngle);
 
-            byte[] message = BitConverter.GetBytes(((int)(_setTime * 1000)));
-            byte[] message2 = BitConverter.GetBytes(convertAngle(_setAngle));
+            byte[] timeMessage = BitConverter.GetBytes(((int)(_setTime * 1000)));
+            byte[] angleMessage = BitConverter.GetBytes(convertAngle(_setAngle));
+            byte[] velMessage = BitConverter.GetBytes(((int)(_setVel * 1000)));
             var model = BindingContext as SelectDeviceViewModel;
-            byte[] data = new byte[14];
+            byte[] data = new byte[18];
 
-            char command1 = isStop == true ? 's' : model.CommandList[model.SelectedCommand][0];
-            char command2 = isStop == true ? 't' : model.CommandList[model.SelectedCommand][1]; ;
+            char command1 = isStop == true ? 's' : 'r';
+            char command2 = isStop == true ? 't' : 'n';
             data[0] = 0xAB;
             data[1] = 0xCD;
             data[2] = (byte)command1;
             data[3] = (byte)command2;
-            data[4] = message[3];
-            data[5] = message[2];
-            data[6] = message[1];
-            data[7] = message[0];
-            data[8] = message2[3];
-            data[9] = message2[2];
-            data[10] = message2[1];
-            data[11] = message2[0];
-            data[12] = 0xAF;
-            data[13] = 0xCF;
+            data[4] = timeMessage[3];
+            data[5] = timeMessage[2];
+            data[6] = timeMessage[1];
+            data[7] = timeMessage[0];
+            data[8] = angleMessage[3];
+            data[9] = angleMessage[2];
+            data[10] = angleMessage[1];
+            data[11] = angleMessage[0];
+            data[12] = velMessage[3];
+            data[13] = velMessage[2];
+            data[14] = velMessage[1];
+            data[15] = velMessage[0];
+            data[16] = 0xAF;
+            data[17] = 0xCF;
             PWM.Clear();
             avgPWM = 0;
 

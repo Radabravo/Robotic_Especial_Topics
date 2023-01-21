@@ -429,15 +429,13 @@ int convertVelToPwm(double vel)
   // return pwm;
   // estando no chão
   //sem estar no chão
-  // int pwm = (int)((vel+0.0480)/0.0023);
+  int pwm = (int)((vel+0.2333)/0.0130);
   
   // estando no chão
-  if (vel<0.01 && !canRun)
-  {
-    vel = - 0.2333;
-  }
   
-  int pwm = (int)((vel+0.2333)/0.0130);
+  
+  // int pwm = (int)((vel+2917)/162.96);
+  //Serial.println(pwm);
   if (pwm<0)
   {
     pwm=0;
@@ -483,7 +481,7 @@ void setup() {
 }
 
 void loop() {
-  int sizeDecoded = 10;
+  int sizeDecoded = 14;
   uint8_t dataReceived[sizeDecoded+4];
   uint8_t dataDecoded[sizeDecoded];
   
@@ -502,136 +500,37 @@ void loop() {
             (unsigned char)(dataDecoded[7]) << 16 |
             (unsigned char)(dataDecoded[8]) << 8 |
             (unsigned char)(dataDecoded[9]));
+    int velSet = int((unsigned char)(dataDecoded[10]) << 24 |
+            (unsigned char)(dataDecoded[11]) << 16 |
+            (unsigned char)(dataDecoded[12]) << 8 |
+            (unsigned char)(dataDecoded[13]));
     trajectoryDuration = (double(timeSet)/1000);
     //Serial.println(angleSet);
     carHandling.SetSteering(angleSet);
-    if (command[0]+command[1]=="t1")
+    if (command[0]+command[1]=="rn")
     {
+      
       
       
       counterAB=0;
       totalCounterAB=0;
       counterAB2=0;
       totalCounterAB2=0;
-
-
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint1 = 0.25;
-      velocidadeSetpoint2 = 0.25;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-   
-
+      // velocidadeSetpoint1 = ((double(velSet)/1000))*(520/(0.033*2*PI));
+      // velocidadeSetpointToSend = ((double(velSet)/1000));
+      // velocidadeSetpoint2 = velocidadeSetpoint1;
+      velocidadeSetpoint1 = ((double(velSet)/1000));
+      velocidadeSetpointToSend = ((double(velSet)/1000));
+      velocidadeSetpoint2 = velocidadeSetpoint1;
       
+      clearAll();
+     
      
     }
-    else if (command[0]+command[1]=="t2")
-    {
     
-     
-     
-      counterAB=0;
-      totalCounterAB=0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      canRun=true;
-      timeold = micros();
-      timeTrajectory = timeold;
-      velocidadeSetpoint1 = 0.45;
-      velocidadeSetpoint2 = 0.45;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-      
-    }
-    else if (command[0]+command[1]=="t3")
-    {
-    
-     
-     
-      counterAB=0;
-      totalCounterAB=0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      canRun=true;
-      timeold = micros();
-      timeTrajectory = timeold; 
-      velocidadeSetpoint1 = 0.65;
-      velocidadeSetpoint2 = 0.65;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-      
-    }
-    else if (command[0]+command[1]=="t4")
-    {
-    
-     
-     
-      counterAB=0;
-      totalCounterAB=0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      canRun=true;
-      timeold = micros();
-      timeTrajectory = timeold;
-      velocidadeSetpoint1 = 0.85;
-      velocidadeSetpoint2 = 0.85;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-      
-    }
-    else if (command[0]+command[1]=="t5")
-    {
-    
-     
-     
-      counterAB=0;
-      totalCounterAB=0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      canRun=true;
-      timeold = micros();
-      timeTrajectory = timeold;
-      velocidadeSetpoint1 = 1.05;
-      velocidadeSetpoint2 = 1.05;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-      
-    }
-    else if (command[0]+command[1]=="t6")
-    {
-    
-     
-     
-      counterAB=0;
-      totalCounterAB=0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      canRun=true;
-      timeold = micros();
-      timeTrajectory = timeold;
-      velocidadeSetpoint1 = 1.25;
-      velocidadeSetpoint2 = 1.25;
-      velocidadeSetpointToSend = velocidadeSetpoint1;
-      clearAll();
-      
-    }
-    else if (command[0]+command[1]=="t9")
-    {
-      canRun=false;
-      velocidadeSetpoint1 = 0;
-      velocidadeSetpoint2 = 0;    
-      velocidadeSetpointToSend = velocidadeSetpoint1; 
-      timeold =micros();
-      timeTrajectory = timeold;
-      counterAB = 0;
-      totalCounterAB = 0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      clearAll();
-      setZero(Zeros, rawAccel);
-    }
     
     else if (command[0]+command[1]=="st")
     {
@@ -642,8 +541,7 @@ void loop() {
       timeold = micros();
       timeTrajectory = timeold;
       counterAB = 0;
-      counterAB2=0;
-      
+      counterAB2=0;     
       
       clearAll();
     }
@@ -731,11 +629,11 @@ void loop() {
     else   displacement(Vx,&Dx, T, false);
     
     
-    Serial.print(Input2);Serial.print(",");
-    Serial.print(DeltaEncoder);Serial.print(",");
+    // Serial.print(Input2);Serial.print(",");
+    // Serial.print(DeltaEncoder);Serial.print(",");
     Serial.print(velocidadeSetpoint1);Serial.print(",");
     Serial.print(velocidadeSetpoint2);Serial.print(",");
-    Serial.println(Input1);
+    // Serial.println(Input1);
     
     // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
@@ -767,21 +665,23 @@ void loop() {
     
     Input1 = ((2*PI*0.033*counterAB/52));
     Input2 = ((2*PI*0.033*counterAB2/52));
+    // Input1 = ((counterAB*10));
+    // Input2 = ((counterAB2*10));
     DeltaEncoder = Input1-Input2;
     //Serial.println(DeltaEncoder);
-    if (DeltaEncoder>=0)
-    {
-      velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.1;
-      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
+    // if (DeltaEncoder>=0)
+    // {
+    //   velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.1;
+    //   velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
       
-    }
-    else 
-    {
-      velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.1;
-      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
+    // }
+    // else 
+    // {
+    //   velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.1;
+    //   velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
     
-      //Serial.print("Teste");
-    }
+    Serial.print("Teste");
+    // }
     
     timeold = micros();
     pulsos = 0;

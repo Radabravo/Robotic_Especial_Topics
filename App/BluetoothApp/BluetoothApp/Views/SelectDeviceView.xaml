@@ -55,29 +55,33 @@
                 <StackLayout
                     Grid.Row="6"
                     Grid.RowSpan="1"
-                    Grid.Column="2"
-                    Margin="0,0,100,0"
+                    Grid.Column="1"
+                    Margin="30,10,0,0"
                     Grid.ColumnSpan="1"                     
                     IsVisible="{Binding IsConnected}">
-                    <Picker
-                    VerticalOptions="Start"
-                    ItemsSource="{Binding CommandList}"
-                    SelectedIndex="{Binding SelectedCommand}"
-                    HorizontalOptions="Start"
-                    FontSize="36">
-                    </Picker>
-                    
+                    <Label Text="Vel (m/s)"
+                     FontSize="32"
+                     HorizontalTextAlignment="Center"/>
+
+
                 </StackLayout>
+                <Entry x:Name="setVelocity"
+                       Margin="0,0,30,0"
+                       Text="0"
+                       Grid.Row="6"
+                       Grid.Column="2"  
+                       HorizontalTextAlignment="Center"
+                       IsVisible="{Binding IsConnected}"/>
                 <StackLayout
-                     Grid.Row="6"
+                    Grid.Row="7"
                     Grid.RowSpan="1"
                     Grid.Column="1"
-                    Margin="50,10,0,0"
+                    Margin="80,30,0,0"
                     Grid.ColumnSpan="1"                     
                     IsVisible="{Binding IsConnected}">
 
                     <Button
-                    Text="Comando"
+                    Text="START"
                     x:Name="btnSend"
                     Clicked="btnSend_Clicked" 
                     HorizontalOptions="Center"
@@ -87,17 +91,18 @@
                 <StackLayout
                      Grid.Row="7"
                     Grid.RowSpan="1"
-                    Grid.Column="0"
-                    Margin="0,30,0,0"
-                    Grid.ColumnSpan="3"                     
+                    Grid.Column="2"
+                    Margin="0,30,100,0"
+                    Grid.ColumnSpan="1"                     
                     IsVisible="{Binding IsConnected}">
 
                     <Button
-                    Text="Stop"
+                    Text="STOP"
                     x:Name="btnStop"
                     Clicked="btnStop_Clicked" 
                     HorizontalOptions="Center"
-                    Margin="0"/>
+                    Margin="0"
+                    />
 
                 </StackLayout>
                 <StackLayout
@@ -151,7 +156,7 @@
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label Text="Encoder 1 / 2"
+                    <Label Text="Encoder 1 / 2 / &#916;"
                    FontSize="32"
                    HorizontalTextAlignment="Center" />
                     <Label 
@@ -215,7 +220,7 @@
                     Grid.ColumnSpan="2"
                     IsVisible="{Binding IsConnected}"
                     >
-                     <Label Text="ANGLE"
+                    <Label Text="ANGLE (&#952;)"
                      FontSize="32"
                      HorizontalTextAlignment="Center"
                             />
