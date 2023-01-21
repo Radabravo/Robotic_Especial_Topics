@@ -24,8 +24,8 @@ String command[2];
 // Constantes do Controle PID
 #define MIN_PWM 0
 #define MAX_PWM 255
-#define KP 1.3
-#define KI 1.15
+#define KP 5
+#define KI 4
 #define KD 0.002
 
 
@@ -221,7 +221,7 @@ void SendData_Bluetooth()
     return;
   }
   // Sending 16 bits of data over bluetooth.
-  int avgVeltoSend = (int)(abs(Input1)*1000);
+  int avgVeltoSend = (int)(abs(Input1*(2*PI*0.033/520))*1000);
   int calculateDisplacement = (int)(trajectoryDuration*velocidadeSetpointToSend*1000); 
   int sendDy = (int)(abs(Dy)*10000); 
   int sendDx = (int)(abs(Dx)*10000); 
@@ -424,18 +424,13 @@ void setZero(float *Zeros, VectorFloat rawAccel)
 
 int convertVelToPwm(double vel)
 {
-  // int pwm = (int)((vel+0.0480)/0.0023);
-  // //sem estar no chão
-  // return pwm;
-  // estando no chão
-  //sem estar no chão
-  int pwm = (int)((vel+0.2333)/0.0130);
   
-  // estando no chão
+  // int pwm = (int)((vel+0.2333)/0.0130);
   
   
-  // int pwm = (int)((vel+2917)/162.96);
-  //Serial.println(pwm);
+  
+  int pwm = (int)((vel+2917)/163);
+  
   if (pwm<0)
   {
     pwm=0;
@@ -450,9 +445,10 @@ int convertVelToPwm(double vel)
 
 void setup() {
   //carHandling.StopAll();
-  motorPID1.SetOutputLimits(MIN_PWM, MAX_PWM);
+  motorPID1.SetOutputLimits(MIN_PWM, 1000000);
+  motorPID2.SetOutputLimits(MIN_PWM, 1000000);
   motorPID1.SetMode(AUTOMATIC);
-  motorPID2.SetOutputLimits(MIN_PWM, MAX_PWM);
+ 
   motorPID2.SetMode(AUTOMATIC);
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
@@ -519,12 +515,12 @@ void loop() {
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      // velocidadeSetpoint1 = ((double(velSet)/1000))*(520/(0.033*2*PI));
-      // velocidadeSetpointToSend = ((double(velSet)/1000));
-      // velocidadeSetpoint2 = velocidadeSetpoint1;
-      velocidadeSetpoint1 = ((double(velSet)/1000));
+      velocidadeSetpoint1 = round(((double(velSet)/1000))*(520/(0.033*2*PI)));
       velocidadeSetpointToSend = ((double(velSet)/1000));
       velocidadeSetpoint2 = velocidadeSetpoint1;
+      // velocidadeSetpoint1 = ((double(velSet)/1000));
+      // velocidadeSetpointToSend = ((double(velSet)/1000));
+      // velocidadeSetpoint2 = velocidadeSetpoint1;
       
       clearAll();
      
@@ -629,11 +625,12 @@ void loop() {
     else   displacement(Vx,&Dx, T, false);
     
     
-    // Serial.print(Input2);Serial.print(",");
+    Serial.print(Output1);Serial.print(",");
+    Serial.print(Output2);Serial.print(",");
     // Serial.print(DeltaEncoder);Serial.print(",");
     Serial.print(velocidadeSetpoint1);Serial.print(",");
     Serial.print(velocidadeSetpoint2);Serial.print(",");
-    // Serial.println(Input1);
+    Serial.println(Input1);
     
     // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
@@ -663,10 +660,10 @@ void loop() {
     detachInterrupt(25);
     detachInterrupt(33);
     
-    Input1 = ((2*PI*0.033*counterAB/52));
-    Input2 = ((2*PI*0.033*counterAB2/52));
-    // Input1 = ((counterAB*10));
-    // Input2 = ((counterAB2*10));
+    // Input1 = ((2*PI*0.033*counterAB/52));
+    // Input2 = ((2*PI*0.033*counterAB2/52));
+    Input1 = ((counterAB*10));
+    Input2 = ((counterAB2*10));
     DeltaEncoder = Input1-Input2;
     //Serial.println(DeltaEncoder);
     // if (DeltaEncoder>=0)
@@ -680,7 +677,7 @@ void loop() {
     //   velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.1;
     //   velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
     
-    Serial.print("Teste");
+    //Serial.print("Teste");
     // }
     
     timeold = micros();
