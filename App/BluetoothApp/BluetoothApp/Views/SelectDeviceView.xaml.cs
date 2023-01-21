@@ -136,6 +136,11 @@ namespace BluetoothApp.Views
             data4[1] = data.ElementAt(8);
             var signalDx = data.ElementAt(9) == 0 ? 1 : -1;
             PWM.Add(data.ElementAt(10));
+            var data5 = new byte[4] { 0, 0, 0, 0 };
+            data5[0] = data.ElementAt(11);
+            data5[1] = data.ElementAt(12);
+            data5[2] = data.ElementAt(13);
+            data5[3] = data.ElementAt(14);
 
             if (PWM.Count() > 0)
             {
@@ -151,7 +156,8 @@ namespace BluetoothApp.Views
             var calculateDisplacement = BitConverter.ToInt32(data2, 0);
             var dyMPU = BitConverter.ToInt32(data3, 0);
             var dxMPU = BitConverter.ToInt32(data4, 0);
-            var convert = BitConverter.ToInt32(data.ToArray(), 11);
+            var convert = BitConverter.ToInt32(data.ToArray(), 15);
+            var convert2 = BitConverter.ToInt32(data5.ToArray(), 0);
             model.AvgVel = (double)(avgValue) / 1000;
             model.CalculateDisplacement = (double)(calculateDisplacement) / 1000;
             model.DyMPU = (double)(dyMPU) / 1000 * signalDy;
@@ -159,6 +165,8 @@ namespace BluetoothApp.Views
             model.AvgPWM = avgPWM;
             //var aux = ((double)(convert)) * 0.033 * 2 * Math.PI / 520;
             model.Encoder = convert;
+            model.Encoder2 = convert2;
+            model.EncoderError = convert - convert2;
             model.RealDisplacement = ((double)(convert)) * 0.033 * 2 * Math.PI / 520;
         }
 

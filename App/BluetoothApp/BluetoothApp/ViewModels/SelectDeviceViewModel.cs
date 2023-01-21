@@ -203,6 +203,28 @@ namespace BluetoothApp.ViewModels
                 OnPropertyChanged(nameof(Encoder));
             }
         }
+        private int _encoder2;
+
+        public int Encoder2
+        {
+            get { return _encoder2; }
+            set
+            {
+                _encoder2 = value;
+                OnPropertyChanged(nameof(Encoder2));
+            }
+        }
+        private int _encoderError;
+
+        public int EncoderError
+        {
+            get { return _encoderError; }
+            set
+            {
+                _encoderError = value;
+                OnPropertyChanged(nameof(EncoderError));
+            }
+        }
 
 
 

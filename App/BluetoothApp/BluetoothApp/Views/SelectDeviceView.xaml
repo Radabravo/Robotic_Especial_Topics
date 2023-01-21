@@ -151,24 +151,27 @@
                             </FormattedString>
                         </Label.FormattedText>
                     </Label>
-                    <Label Text="Encoder"
+                    <Label Text="Encoder 1 / 2"
                    FontSize="32"
                    HorizontalTextAlignment="Center" />
                     <Label 
                    FontSize="32"
                    HorizontalTextAlignment="Center" 
-                   VerticalOptions="Fill"
-                        Text="{Binding Encoder, Mode=TwoWay}">
-                        <!--<Label.FormattedText>
+                   VerticalOptions="Fill">
+
+                        <Label.FormattedText>
                             <FormattedString>
-                                <Span Text=" Dy "/>
-                                <Span Text="{Binding DyMPU, Mode=TwoWay,  StringFormat='{0:F2}'}"/>
-                                <Span Text=" m / "/>
-                                <Span Text=" Dx "/>
-                                <Span Text="{Binding DxMPU, Mode=TwoWay,  StringFormat='{0:F2}'}"/>
-                                <Span Text=" m"/>
+                                
+                                <Span Text="{Binding Encoder, Mode=TwoWay}"/>
+                                <Span Text="  / "/>
+                                
+                                <Span Text="{Binding Encoder2, Mode=TwoWay}"/>
+                                <Span Text="  / "/>
+
+                                <Span Text="{Binding EncoderError, Mode=TwoWay}"/>
+
                             </FormattedString>
-                        </Label.FormattedText>-->
+                        </Label.FormattedText>
                     </Label>
 
                 </StackLayout>

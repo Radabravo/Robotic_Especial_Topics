@@ -30,18 +30,22 @@ String command[2];
 
 
 // Variáveis do Sensor Infravermelho e PID
-double Input;
+double Input1;
+double Input2;
 volatile byte pulsos;
 unsigned long timeold;
-
+double DeltaEncoder;
 int pinoSensor = 2;               //Pino do Arduino ligado ao pino D0 do sensor
 unsigned int pulsosDisco = 520;    //Altere o valor conforme disco encoder
-double Output = 0;
-double velocidadeSetpoint = 0;  // Alterar conforme velocidade desejadavo
+double Output1 = 0;
+double Output2 = 0;
+double velocidadeSetpoint1 = 0;  // Alterar conforme velocidade desejadavo
+double velocidadeSetpoint2 = 0;
 double velocidadeSetpointToSend = 0;
 
 // Cria PID para controle
-PID motorPID(&Input, &Output, &velocidadeSetpoint, KP, KI, KD, DIRECT);
+PID motorPID1(&Input1, &Output1, &velocidadeSetpoint1, KP, KI, KD, DIRECT);
+PID motorPID2(&Input2, &Output2, &velocidadeSetpoint2, KP, KI, KD, DIRECT);
 unsigned long serialSendInterval;
 unsigned long btSendInterval;
 
@@ -79,6 +83,8 @@ int velocidadeB = 0;
 
 volatile int long counterAB = 0;
 volatile int long totalCounterAB = 0;
+volatile int long counterAB2 = 0;
+volatile int long totalCounterAB2 = 0;
 volatile int  laps = 0;
 bool dir = false;
 
@@ -155,6 +161,58 @@ void ai1() {
     dir=true;
   }
 }
+void ai2() {
+
+ 
+  // Incrementa ou decrementa o contador de acordo com a condição do sinal no canal B
+  if (digitalRead(33) == HIGH && digitalRead(32) == LOW) {
+    counterAB2 ++;
+    totalCounterAB2 ++;
+    dir=true;
+  }
+  else {
+    counterAB2 --;
+    totalCounterAB2 --;
+    dir=false;
+  }
+ 
+  if (digitalRead(33) == LOW && digitalRead(32) == HIGH) {
+    counterAB2 ++;
+    totalCounterAB2 ++;
+    dir=true;
+  }
+  else {
+    counterAB2 --;
+    totalCounterAB2 --;
+    dir=false;
+  }
+ 
+}
+ 
+void ai3() { 
+
+  if (digitalRead(32) == LOW && digitalRead(33) == HIGH) {
+    counterAB2 --;
+    totalCounterAB2 --;
+    dir=false;
+  }
+  else {
+    counterAB2 ++;
+    totalCounterAB2 ++;
+    dir=true;
+  }
+ 
+  if (digitalRead(32) == HIGH && digitalRead(33) == LOW) {
+    counterAB2 --;
+    totalCounterAB2 --;
+    dir=false;
+  }
+  else {
+    counterAB2 ++;
+    totalCounterAB2++;
+    dir=true;
+  }
+}
 void SendData_Bluetooth()
 {
   if(!serialBT.hasClient()){
@@ -163,7 +221,7 @@ void SendData_Bluetooth()
     return;
   }
   // Sending 16 bits of data over bluetooth.
-  int avgVeltoSend = (int)(abs(Input)*1000);
+  int avgVeltoSend = (int)(abs(Input1)*1000);
   int calculateDisplacement = (int)(trajectoryDuration*velocidadeSetpointToSend*1000); 
   int sendDy = (int)(abs(Dy)*10000); 
   int sendDx = (int)(abs(Dx)*10000); 
@@ -177,15 +235,19 @@ void SendData_Bluetooth()
   uint8_t data8 = sendDx & 0xFF;
   uint8_t data9 = (sendDx >> 8) & 0xFF;  
   uint8_t data10 = Dx>0 ? 0 : 1; 
-  uint8_t data11 = convertVelToPwm(Input); 
-  uint8_t data12 = totalCounterAB & 0xFF;        
-  uint8_t data13 = (totalCounterAB >> 8) & 0xFF;; 
-  uint8_t data14 = (totalCounterAB >> 16)& 0xFF; 
-  uint8_t data15 = (totalCounterAB >> 24) & 0xFF; 
+  uint8_t data11 = convertVelToPwm(Input1); 
+  uint8_t data12 = totalCounterAB2 & 0xFF;        
+  uint8_t data13 = (totalCounterAB2 >> 8) & 0xFF;; 
+  uint8_t data14 = (totalCounterAB2 >> 16)& 0xFF; 
+  uint8_t data15 = (totalCounterAB2 >> 24) & 0xFF; 
+  uint8_t data16 = totalCounterAB & 0xFF;        
+  uint8_t data17 = (totalCounterAB >> 8) & 0xFF;; 
+  uint8_t data18 = (totalCounterAB >> 16)& 0xFF; 
+  uint8_t data19 = (totalCounterAB >> 24) & 0xFF; 
 
   if (millis() - btSendInterval >= BT_TIME_INTERVAL)
   {
-    uint8_t data[19];
+    uint8_t data[23];
 
     data[0] = 0xAB;
     data[1] = 0xCD;
@@ -204,8 +266,12 @@ void SendData_Bluetooth()
     data[14] = data13;
     data[15] = data14;
     data[16] = data15;
-    data[17] = 0xAF;
-    data[18] = 0xCF;
+    data[17] = data16;
+    data[18] = data17;
+    data[19] = data18;
+    data[20] = data19;
+    data[21] = 0xAF;
+    data[22] = 0xCF;
    
 
     serialBT.write(data, sizeof(data));
@@ -342,6 +408,8 @@ void clearAll()
   Dz=0;
   //carHandling.SetSteering(90);
   counterAB=0;
+  counterAB2=0;
+
 }
 void setZero(float *Zeros, VectorFloat rawAccel)
 {
@@ -384,13 +452,18 @@ int convertVelToPwm(double vel)
 
 void setup() {
   //carHandling.StopAll();
-  motorPID.SetOutputLimits(MIN_PWM, MAX_PWM);
-  motorPID.SetMode(AUTOMATIC);
+  motorPID1.SetOutputLimits(MIN_PWM, MAX_PWM);
+  motorPID1.SetMode(AUTOMATIC);
+  motorPID2.SetOutputLimits(MIN_PWM, MAX_PWM);
+  motorPID2.SetMode(AUTOMATIC);
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(32), ai2, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(33), ai3, CHANGE);
   Serial.begin(9600);
   carHandling.SetSteeringMotor(25);
-  velocidadeSetpoint=0;
+  velocidadeSetpoint1=0;
+  velocidadeSetpoint2=0;
   carHandling.SetTractionMotor(IN1,IN2,IN3,IN4);
   carHandling.SetSteering(90);
   while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
@@ -438,11 +511,16 @@ void loop() {
       
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
+
+
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint = 0.25;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 0.25;
+      velocidadeSetpoint2 = 0.25;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
    
 
@@ -456,11 +534,14 @@ void loop() {
      
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint = 0.45;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 0.45;
+      velocidadeSetpoint2 = 0.45;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
       
     }
@@ -471,11 +552,14 @@ void loop() {
      
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold; 
-      velocidadeSetpoint = 0.65;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 0.65;
+      velocidadeSetpoint2 = 0.65;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
       
     }
@@ -486,11 +570,14 @@ void loop() {
      
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint = 0.85;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 0.85;
+      velocidadeSetpoint2 = 0.85;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
       
     }
@@ -501,11 +588,14 @@ void loop() {
      
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint = 1.05;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 1.05;
+      velocidadeSetpoint2 = 1.05;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
       
     }
@@ -516,23 +606,29 @@ void loop() {
      
       counterAB=0;
       totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
       canRun=true;
       timeold = micros();
       timeTrajectory = timeold;
-      velocidadeSetpoint = 1.25;
-      velocidadeSetpointToSend = velocidadeSetpoint;
+      velocidadeSetpoint1 = 1.25;
+      velocidadeSetpoint2 = 1.25;
+      velocidadeSetpointToSend = velocidadeSetpoint1;
       clearAll();
       
     }
     else if (command[0]+command[1]=="t9")
     {
       canRun=false;
-      velocidadeSetpoint = 0;    
-      velocidadeSetpointToSend = velocidadeSetpoint; 
+      velocidadeSetpoint1 = 0;
+      velocidadeSetpoint2 = 0;    
+      velocidadeSetpointToSend = velocidadeSetpoint1; 
       timeold =micros();
       timeTrajectory = timeold;
       counterAB = 0;
       totalCounterAB = 0;
+      counterAB2=0;
+      totalCounterAB2=0;
       clearAll();
       setZero(Zeros, rawAccel);
     }
@@ -540,23 +636,29 @@ void loop() {
     else if (command[0]+command[1]=="st")
     {
       canRun=false;
-      velocidadeSetpoint = 0;    
-      velocidadeSetpointToSend = velocidadeSetpoint; 
+      velocidadeSetpoint1 = 0;    
+      velocidadeSetpoint2 = 0;
+      velocidadeSetpointToSend = velocidadeSetpoint1; 
       timeold = micros();
       timeTrajectory = timeold;
       counterAB = 0;
+      counterAB2=0;
+      
       
       clearAll();
     }
     else 
     {
       canRun = false;
-      velocidadeSetpoint = 0;    
-      velocidadeSetpointToSend = velocidadeSetpoint; 
+      velocidadeSetpoint1 = 0;    
+      velocidadeSetpoint2 = 0;
+      velocidadeSetpointToSend = velocidadeSetpoint1; 
       timeold = micros();
       timeTrajectory = timeold;
       counterAB = 0;
       totalCounterAB = 0;
+      counterAB2=0;
+      totalCounterAB2=0;
       clearAll();
     }
     
@@ -566,7 +668,8 @@ void loop() {
   if (micros()-timeTrajectory>=trajectoryDuration*TSAMPLE && canRun)
   {
     timeTrajectory=micros();
-    velocidadeSetpoint=0;
+    velocidadeSetpoint1=0;
+    velocidadeSetpoint2 = 0;
     canRun=false;
   }
   
@@ -628,14 +731,18 @@ void loop() {
     else   displacement(Vx,&Dx, T, false);
     
     
-    //Serial.print(AcY[1]);Serial.print(",");
-    Serial.print(velocidadeSetpoint);Serial.print(",");
-    Serial.println(Input);
+    Serial.print(Input2);Serial.print(",");
+    Serial.print(DeltaEncoder);Serial.print(",");
+    Serial.print(velocidadeSetpoint1);Serial.print(",");
+    Serial.print(velocidadeSetpoint2);Serial.print(",");
+    Serial.println(Input1);
     
+    // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
     // Serial.println(ang_kalmanXZ);
     // Serial.println("Total Pulses: ");
     // Serial.println(((totalCounterAB)));
+    // Serial.println(((totalCounterAB2)));
     // Serial.println("Average speed: ");
     //Serial.println(((avgVel)), 5);
    
@@ -645,25 +752,50 @@ void loop() {
 
   
   
-  motorPID.Compute();
+  motorPID1.Compute();
+  motorPID2.Compute();
   // Ajusta PWM no motor
-  carHandling.Move(convertVelToPwm (Output));   // Utiliza velocidade calculada
+  carHandling.Move1(convertVelToPwm (Output1));   // Utiliza velocidade calculada
+  carHandling.Move2(convertVelToPwm (Output2));
 
   if (micros()-timeold>=100000)
   {
     detachInterrupt(34);
     detachInterrupt(35);    //Desabilita interrupção durante o cálculo para evitar sair do IF
+    detachInterrupt(25);
+    detachInterrupt(33);
     
-    Input = ((2*PI*0.033*counterAB/52));
+    Input1 = ((2*PI*0.033*counterAB/52));
+    Input2 = ((2*PI*0.033*counterAB2/52));
+    DeltaEncoder = Input1-Input2;
+    //Serial.println(DeltaEncoder);
+    if (DeltaEncoder>=0)
+    {
+      velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.1;
+      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
+      
+    }
+    else 
+    {
+      velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.1;
+      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
+    
+      //Serial.print("Teste");
+    }
+    
     timeold = micros();
     pulsos = 0;
    
    
     counterAB = 0;
+    counterAB2 = 0;
+
     
     // Habilita novamente a interrupção
     attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
     attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(32), ai2, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(33), ai3, CHANGE);
   }
 
 }

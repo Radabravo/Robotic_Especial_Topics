@@ -26,16 +26,29 @@ void CarHandling::SetSteering(int steering)
     steering = map(steering, 0, 180, 0, 180);
     steeringControl.write(steering);
 }
-void CarHandling::Move(int Vel)
+void CarHandling::Move1(int Vel)
 {
     if (Vel>=0)
     {    
     analogWrite(In1,Vel);
-    analogWrite(In3,Vel);
+    
     }
     else
     {
     analogWrite(In2,Vel);
+    
+    }
+}
+void CarHandling::Move2(int Vel)
+{
+    if (Vel>=0)
+    {    
+    
+    analogWrite(In3,Vel);
+    }
+    else
+    {
+    
     analogWrite(In4,Vel);
     }
 }
