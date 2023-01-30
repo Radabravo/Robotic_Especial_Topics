@@ -24,9 +24,9 @@ String command[2];
 // Constantes do Controle PID
 #define MIN_PWM 0
 #define MAX_PWM 255
-#define KP 5
-#define KI 4
-#define KD 0.002
+#define KP 1.5
+#define KI 1.3
+#define KD 0.001
 
 
 // Variáveis do Sensor Infravermelho e PID
@@ -98,7 +98,7 @@ void setZero(float *Zeros, VectorFloat rawAccel);
 void clearAll();
 void SendData_Bluetooth();
 void SendData_Serial();
-int convertVelToPwm(double vel);
+int convertVelToPwm(double vel, int motor);
 //HEADERS
 
 //Decode BT
@@ -235,7 +235,7 @@ void SendData_Bluetooth()
   uint8_t data8 = sendDx & 0xFF;
   uint8_t data9 = (sendDx >> 8) & 0xFF;  
   uint8_t data10 = Dx>0 ? 0 : 1; 
-  uint8_t data11 = convertVelToPwm(Input1); 
+  uint8_t data11 = convertVelToPwm(Output1,1); 
   uint8_t data12 = totalCounterAB2 & 0xFF;        
   uint8_t data13 = (totalCounterAB2 >> 8) & 0xFF;; 
   uint8_t data14 = (totalCounterAB2 >> 16)& 0xFF; 
@@ -422,19 +422,32 @@ void setZero(float *Zeros, VectorFloat rawAccel)
 
 
 
-int convertVelToPwm(double vel)
+int convertVelToPwm(double vel, int motor)
 {
+  int pwm = 0;
   
-  // int pwm = (int)((vel+0.2333)/0.0130);
+  if (motor==1) // Motor esquerdo 
+  {
+    pwm = (int)((vel+1366.7)/169);
+  }
+  else if (motor == 2) // Motor Direito
+  {
+    pwm = (int)((vel+1348.7)/168.6);
+  }
+
+
+  //int pwm = (int)((vel+0.2333)/0.0130);
   
   
   
-  int pwm = (int)((vel+2917)/163);
+  // int pwm = (int)((vel+2917)/163);
   
   if (pwm<0)
   {
     pwm=0;
   }
+  
+  
   
   return pwm;
  
@@ -530,6 +543,7 @@ void loop() {
     
     else if (command[0]+command[1]=="st")
     {
+      
       canRun=false;
       velocidadeSetpoint1 = 0;    
       velocidadeSetpoint2 = 0;
@@ -538,7 +552,7 @@ void loop() {
       timeTrajectory = timeold;
       counterAB = 0;
       counterAB2=0;     
-      
+     
       clearAll();
     }
     else 
@@ -565,6 +579,8 @@ void loop() {
     velocidadeSetpoint1=0;
     velocidadeSetpoint2 = 0;
     canRun=false;
+ 
+    
   }
   
   if (micros()-currentTime>=T*TSAMPLE)
@@ -625,12 +641,13 @@ void loop() {
     else   displacement(Vx,&Dx, T, false);
     
     
-    Serial.print(Output1);Serial.print(",");
-    Serial.print(Output2);Serial.print(",");
-    // Serial.print(DeltaEncoder);Serial.print(",");
+    // Serial.print(Output1);Serial.print(",");
+    // Serial.print(Output2);Serial.print(",");
+    Serial.print(DeltaEncoder);Serial.print(",");
     Serial.print(velocidadeSetpoint1);Serial.print(",");
     Serial.print(velocidadeSetpoint2);Serial.print(",");
-    Serial.println(Input1);
+    Serial.print(Input1);Serial.print(",");
+    Serial.println(Input2);
     
     // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
@@ -650,8 +667,23 @@ void loop() {
   motorPID1.Compute();
   motorPID2.Compute();
   // Ajusta PWM no motor
-  carHandling.Move1(convertVelToPwm (Output1));   // Utiliza velocidade calculada
-  carHandling.Move2(convertVelToPwm (Output2));
+  carHandling.Move1(convertVelToPwm (Output1,1));   // Utiliza velocidade calculada
+  carHandling.Move2(convertVelToPwm (Output2,2));
+ 
+    
+  if (DeltaEncoder>=0 && velocidadeSetpoint1!=0)
+  {
+    velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.0001;
+    velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
+    
+  }
+  else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
+  {
+    velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
+    velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
+  
+  
+  }
 
   if (micros()-timeold>=100000)
   {
@@ -662,23 +694,10 @@ void loop() {
     
     // Input1 = ((2*PI*0.033*counterAB/52));
     // Input2 = ((2*PI*0.033*counterAB2/52));
+
     Input1 = ((counterAB*10));
     Input2 = ((counterAB2*10));
-    DeltaEncoder = Input1-Input2;
-    //Serial.println(DeltaEncoder);
-    // if (DeltaEncoder>=0)
-    // {
-    //   velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.1;
-    //   velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
-      
-    // }
-    // else 
-    // {
-    //   velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.1;
-    //   velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.1;
-    
-    //Serial.print("Teste");
-    // }
+    DeltaEncoder = Input1 - Input2;
     
     timeold = micros();
     pulsos = 0;
