@@ -230,7 +230,7 @@ class MPU6050
 	void setThreshold(int16_t multiple = 1);
 	int16_t getThreshold(void);
 
-	VectorFloat readRawGyro(void);
+	Vector readRawGyro(void);
 	VectorFloat readNormalizeGyro(void);
 
 	VectorFloat readRawAccel(void);

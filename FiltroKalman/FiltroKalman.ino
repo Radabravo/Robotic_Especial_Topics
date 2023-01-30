@@ -165,9 +165,8 @@ void loop() {
     AcX[1]=LPFilterAlternativeFirst(AcX[1],0);
     velocity((AcX),&Vx[1],&count0);
     displacement(Vx,&Dx);
-    Serial.print(AcX[1]);Serial.print(",");
-    Serial.print(Vx[1]);Serial.print(",");
-    Serial.println(Dx);
+   
+    Serial.println(vang_gyroX);
     
   }
   
