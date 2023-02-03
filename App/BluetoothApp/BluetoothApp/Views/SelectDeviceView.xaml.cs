@@ -170,7 +170,7 @@ namespace BluetoothApp.Views
             model.RealDisplacement = ((double)(convert)) * 0.033 * 2 * Math.PI / 520;
         }
 
-       
+
 
         private int convertAngle(int angle)
         {
@@ -178,29 +178,27 @@ namespace BluetoothApp.Views
             if (angle <= 80 && angle >= -80)
             {
 
-                if (oldSetAngle >= 90)
-                {
-                    if (angle >= 0)
-                    {
-                        _angle = angle + 90 +3;
-                    }
-                    else
-                    {
-                        _angle = angle +90 + 3;
-                    }
 
-                }
-                else
+
+
+               
+                _angle = angle + 110;
+                
+
+               
+
+                if (angle==0)
                 {
-                    if (angle >= 0)
+                    if (oldSetAngle - _angle >= 0)
                     {
-                        _angle = angle + 90 + 5;
+                        _angle -=15;
                     }
-                    else
-                    {
-                        _angle = angle + 90 +5;
-                    }
+                    else { _angle -= 7; }
                 }
+                
+                
+
+
                 oldSetAngle = _angle;
 
 
@@ -217,35 +215,38 @@ namespace BluetoothApp.Views
             double _setTime = 0.0;
             double _setVel = 0.0;
             double.TryParse(setTime.Text, out _setTime);
-            double.TryParse(setVelocity.Text,out _setVel);
+            double.TryParse(setVelocity.Text, out _setVel);
             int.TryParse(setAngle.Text, out _setAngle);
 
             byte[] timeMessage = BitConverter.GetBytes(((int)(_setTime * 1000)));
             byte[] angleMessage = BitConverter.GetBytes(convertAngle(_setAngle));
+
             byte[] velMessage = BitConverter.GetBytes(((int)(_setVel * 1000)));
             var model = BindingContext as SelectDeviceViewModel;
-            byte[] data = new byte[18];
+            byte[] data = new byte[19];
 
             char command1 = isStop == true ? 's' : 'r';
             char command2 = isStop == true ? 't' : 'n';
+            char command3 = (_setAngle)==0 ? 'l' : 'c';
             data[0] = 0xAB;
             data[1] = 0xCD;
             data[2] = (byte)command1;
             data[3] = (byte)command2;
-            data[4] = timeMessage[3];
-            data[5] = timeMessage[2];
-            data[6] = timeMessage[1];
-            data[7] = timeMessage[0];
-            data[8] = angleMessage[3];
-            data[9] = angleMessage[2];
-            data[10] = angleMessage[1];
-            data[11] = angleMessage[0];
-            data[12] = velMessage[3];
-            data[13] = velMessage[2];
-            data[14] = velMessage[1];
-            data[15] = velMessage[0];
-            data[16] = 0xAF;
-            data[17] = 0xCF;
+            data[4] = (byte)command3;
+            data[5] = timeMessage[3];
+            data[6] = timeMessage[2];
+            data[7] = timeMessage[1];
+            data[8] = timeMessage[0];
+            data[9] = angleMessage[3];
+            data[10] = angleMessage[2];
+            data[11] = angleMessage[1];
+            data[12] = angleMessage[0];
+            data[13] = velMessage[3];
+            data[14] = velMessage[2];
+            data[15] = velMessage[1];
+            data[16] = velMessage[0];
+            data[17] = 0xAF;
+            data[18] = 0xCF;
             PWM.Clear();
             avgPWM = 0;
 

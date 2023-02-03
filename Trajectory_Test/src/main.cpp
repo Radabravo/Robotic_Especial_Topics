@@ -19,15 +19,15 @@
 
 BluetoothSerial serialBT;
 CarHandling carHandling;
-String command[2];
+String command[3];
 
 // Constantes do Controle PID
 #define MIN_PWM 0
 #define MAX_PWM 255
-#define KP 1.5
-#define KI 1.3
+#define KP 3
+#define KI 2
 #define KD 0.001
-
+#define WB 0.145 // wheel base
 
 // Variáveis do Sensor Infravermelho e PID
 double Input1;
@@ -489,8 +489,24 @@ void setup() {
   carHandling.StopAll();
 }
 
+float CalculateRadius(int angleSet)
+{
+ 
+  float Radius = WB/(tan(((PI/180)*((float)angleSet-110))));
+  
+  
+  return Radius;
+}
+void CalculateCircunVel(float *vel1, float *vel2, float vel, float radius)
+{
+    
+    *vel1=vel*(1+0.08/radius);
+    *vel2=vel*(1-0.08/radius); 
+   
+    
+}
 void loop() {
-  int sizeDecoded = 14;
+  int sizeDecoded = 15;
   uint8_t dataReceived[sizeDecoded+4];
   uint8_t dataDecoded[sizeDecoded];
   
@@ -501,22 +517,23 @@ void loop() {
     
     command[0] = char(dataDecoded[0]);
     command[1] = char(dataDecoded[1]);
-    int timeSet = int((unsigned char)(dataDecoded[2]) << 24 |
-            (unsigned char)(dataDecoded[3]) << 16 |
-            (unsigned char)(dataDecoded[4]) << 8 |
-            (unsigned char)(dataDecoded[5]));
-    int angleSet = int((unsigned char)(dataDecoded[6]) << 24 |
-            (unsigned char)(dataDecoded[7]) << 16 |
-            (unsigned char)(dataDecoded[8]) << 8 |
-            (unsigned char)(dataDecoded[9]));
-    int velSet = int((unsigned char)(dataDecoded[10]) << 24 |
-            (unsigned char)(dataDecoded[11]) << 16 |
-            (unsigned char)(dataDecoded[12]) << 8 |
-            (unsigned char)(dataDecoded[13]));
+    command[2] = char(dataDecoded[2]);
+    int timeSet = int((unsigned char)(dataDecoded[3]) << 24 |
+            (unsigned char)(dataDecoded[4]) << 16 |
+            (unsigned char)(dataDecoded[5]) << 8 |
+            (unsigned char)(dataDecoded[6]));
+    int angleSet = int((unsigned char)(dataDecoded[7]) << 24 |
+            (unsigned char)(dataDecoded[8]) << 16 |
+            (unsigned char)(dataDecoded[9]) << 8 |
+            (unsigned char)(dataDecoded[10]));
+    int velSet = int((unsigned char)(dataDecoded[11]) << 24 |
+            (unsigned char)(dataDecoded[12]) << 16 |
+            (unsigned char)(dataDecoded[13]) << 8 |
+            (unsigned char)(dataDecoded[14]));
     trajectoryDuration = (double(timeSet)/1000);
     //Serial.println(angleSet);
     carHandling.SetSteering(angleSet);
-    if (command[0]+command[1]=="rn")
+    if (command[0]+command[1]+command[2]=="rnl")
     {
       
       
@@ -539,6 +556,36 @@ void loop() {
      
      
     }
+    else if (command[0]+command[1]+command[2]=="rnc")
+    {
+      float velSet1=0, velSet2=0,velLinear=0;     
+      float radius = CalculateRadius(angleSet);
+      velLinear = 2*PI*abs(radius)/trajectoryDuration;
+
+      CalculateCircunVel(&velSet1,&velSet2,velLinear,radius);
+      Serial.println(radius);
+      Serial.println(velSet1);
+      Serial.println(velSet2);
+      counterAB=0;
+      totalCounterAB=0;
+      counterAB2=0;
+      totalCounterAB2=0;
+      canRun=true;
+      timeold = micros();
+      timeTrajectory = timeold;
+      velocidadeSetpoint1 = round(((double(velSet1)))*(520/(0.033*2*PI)));
+      velocidadeSetpointToSend = ((double(velLinear)));
+      velocidadeSetpoint2 = round(((double(velSet2)))*(520/(0.033*2*PI)));
+      // velocidadeSetpoint1 = ((double(velSet)/1000));
+      // velocidadeSetpointToSend = ((double(velSet)/1000));
+      // velocidadeSetpoint2 = velocidadeSetpoint1;
+      
+      clearAll();
+     
+     
+    }
+
+    
     
     
     else if (command[0]+command[1]=="st")
@@ -555,20 +602,7 @@ void loop() {
      
       clearAll();
     }
-    else 
-    {
-      canRun = false;
-      velocidadeSetpoint1 = 0;    
-      velocidadeSetpoint2 = 0;
-      velocidadeSetpointToSend = velocidadeSetpoint1; 
-      timeold = micros();
-      timeTrajectory = timeold;
-      counterAB = 0;
-      totalCounterAB = 0;
-      counterAB2=0;
-      totalCounterAB2=0;
-      clearAll();
-    }
+  
     
 
   }
@@ -643,11 +677,11 @@ void loop() {
     
     // Serial.print(Output1);Serial.print(",");
     // Serial.print(Output2);Serial.print(",");
-    Serial.print(DeltaEncoder);Serial.print(",");
-    Serial.print(velocidadeSetpoint1);Serial.print(",");
-    Serial.print(velocidadeSetpoint2);Serial.print(",");
-    Serial.print(Input1);Serial.print(",");
-    Serial.println(Input2);
+    // Serial.print(DeltaEncoder);Serial.print(",");
+    // Serial.print(velocidadeSetpoint1);Serial.print(",");
+    // Serial.print(velocidadeSetpoint2);Serial.print(",");
+    // Serial.print(Input1);Serial.print(",");
+    // Serial.println(Input2);
     
     // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
@@ -671,19 +705,24 @@ void loop() {
   carHandling.Move2(convertVelToPwm (Output2,2));
  
     
-  if (DeltaEncoder>=0 && velocidadeSetpoint1!=0)
+  if (command[2]=="l")
   {
-    velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.0001;
-    velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
+    if (DeltaEncoder>=0 && velocidadeSetpoint1!=0)
+    {
+      velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.0001;
+      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
+      
+    }
+    else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
+    {
+      velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
+      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
     
+    
+    }
   }
-  else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
-  {
-    velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
-    velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
   
-  
-  }
+ 
 
   if (micros()-timeold>=100000)
   {
