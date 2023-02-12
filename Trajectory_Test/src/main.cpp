@@ -1,12 +1,7 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include "MPU6050.h"
-#include "Filters.h"
 #include <ESP32Servo.h>
 #include <math.h>
-#include <Kalman.h>
 #include "Decode.h"
-#include "AccVelDisp.h"
 #include <BluetoothSerial.h>
 #include "CarHandling.h"
 #include <PID_v1.h>
@@ -53,24 +48,13 @@ const int analogPin = 34;
 long int analogData = 0;
 uint32_t package = 0;
 const double T= 0.05;
-const int MPU = 0x68; //ICD address
-float AcX[2], AcY[2],AcZ[2], Tmp, GyX[2],GyY[2],GyZ[2],Vx[2],Vy[2],Vz[2],Dx=0,Dy=0,Dz=0,Zeros[3];// Dados do MPU
 unsigned long currentTime=0, timeTrajectory=0;
 int stepCount=0,stepCount1=0;
-float ang_accelXZ,vang_gyroY,ang_kalmanXZ,ang_accelYZ,vang_gyroX,ang_kalmanYZ,ang_accelXY,vang_gyroZ,ang_kalmanXY;
-float y_pass_alt[3][3], x_pass_alt[3][3];
-float movAvg[10];
+
 float avgVel=0;
 double trajectoryDuration = 5;
 int countX=0,countY = 0,countMvAvg=0;
 bool canRun=false;
-String option;
-Kalman FiltroKalmanXZ;
-Kalman FiltroKalmanYZ;
-Kalman FiltroKalmanXY;
-VectorFloat rawGyro;
-VectorFloat rawAccel;
-MPU6050 mpu;
 
 //motor_A
 int IN1 = 4 ;
@@ -89,12 +73,7 @@ volatile int  laps = 0;
 bool dir = false;
 
 //HEADERS
-void setupKalman();
-float LPFilterAlternative(float x, int axis);
-float LPFilterAlternativeFirst(float x, int axis);
-float movingAvgFilter(float x);
-void fitData();
-void setZero(float *Zeros, VectorFloat rawAccel);
+
 void clearAll();
 void SendData_Bluetooth();
 void SendData_Serial();
@@ -223,18 +202,18 @@ void SendData_Bluetooth()
   // Sending 16 bits of data over bluetooth.
   int avgVeltoSend = (int)(abs(Input1*(2*PI*0.033/520))*1000);
   int calculateDisplacement = (int)(trajectoryDuration*velocidadeSetpointToSend*1000); 
-  int sendDy = (int)(abs(Dy)*10000); 
-  int sendDx = (int)(abs(Dx)*10000); 
+  int sendDy = (int)(abs(0)*10000); 
+  int sendDx = (int)(abs(0)*10000); 
   uint8_t data1 = avgVeltoSend & 0xFF;        
   uint8_t data2 = (avgVeltoSend >> 8) & 0xFF;
   uint8_t data3 = calculateDisplacement& 0xFF;
   uint8_t data4 = (calculateDisplacement >> 8) & 0xFF;  
   uint8_t data5 = sendDy & 0xFF;        
   uint8_t data6 = (sendDy >> 8) & 0xFF;
-  uint8_t data7 = Dy>0 ? 0 : 1;
+  uint8_t data7 =0;
   uint8_t data8 = sendDx & 0xFF;
   uint8_t data9 = (sendDx >> 8) & 0xFF;  
-  uint8_t data10 = Dx>0 ? 0 : 1; 
+  uint8_t data10 = 0; 
   uint8_t data11 = convertVelToPwm(Output1,1); 
   uint8_t data12 = totalCounterAB2 & 0xFF;        
   uint8_t data13 = (totalCounterAB2 >> 8) & 0xFF;; 
@@ -301,122 +280,16 @@ void SendData_Serial()
 
 
 
-void setupKalman()
-{
-  FiltroKalmanXZ.setQangle(T*T*0.0466);
-  FiltroKalmanXZ.setQbias(0.0466);
-  FiltroKalmanXZ.setRmeasure(10);
-  FiltroKalmanXZ.setAngle(0);
-  FiltroKalmanXY.setQangle(T*T*0.0466);
-  FiltroKalmanXY.setQbias(0.0466);
-  FiltroKalmanXY.setRmeasure(10);
-  FiltroKalmanXY.setAngle(0);
-  FiltroKalmanYZ.setQangle(T*T*0.0466);
-  FiltroKalmanYZ.setQbias(0.0466);
-  FiltroKalmanYZ.setRmeasure(10);
-  FiltroKalmanYZ.setAngle(0);
-}
-float LPFilterAlternative(float x, int axis)
-{
-  
-  const float a=0.50, b = 0.70;
-  y_pass_alt[2][axis] = (a+b)*y_pass_alt[1][axis] -a*b*y_pass_alt[0][axis] +(1-a-b+a*b)*x_pass_alt[0][axis] ;
-  float y = y_pass_alt[2][axis] ;
-  y_pass_alt[0][axis] =y_pass_alt[1][axis] ;
-  y_pass_alt[1][axis] =y_pass_alt[2][axis] ;
-  x_pass_alt[0][axis] =x_pass_alt[1][axis] ;
-  x_pass_alt[1][axis] =x_pass_alt[2][axis] ;
-  x_pass_alt[2][axis] = x;
-  return y;
-
-}
-float LPFilterAlternativeFirst(float x, int axis)
-{
-  
-  const float a=0.65;
-  y_pass_alt[1][axis] = (a)*y_pass_alt[0][axis]+(1-a)*x_pass_alt[1][axis];
-  float y = y_pass_alt[1][axis] ;
-  y_pass_alt[0][axis] =y_pass_alt[1][axis] ;
-  x_pass_alt[0][axis] = x_pass_alt[1][axis] ;
-  x_pass_alt[1][axis] = x;
-  return y;
-
-}
-float movingAvgFilter(float x)
-{
-  float avg=0;
-  if(countMvAvg<10)
-  {
-    movAvg[countMvAvg]=x;
-    return x;
-  }
-  else
-  {
-    for(int i = 0 ; i<10-1; i++)
-    {
-      movAvg[i]=movAvg[i+1];
-    }
-    movAvg[9]=x;
-    for(int i = 0 ; i<10-1; i++)
-    {
-      avg=movAvg[i]/10;
-    }
-    return avg;
-  }
-  countMvAvg++;
-}
-void fitData()
-{
-    
-    accel_fit(&rawAccel.XAxis,Zeros,0);
-    //rawAccel.YAxis=rawAccel.YAxis/16384;
-    accel_fit(&rawAccel.YAxis,Zeros,1);
-    //rawAccel.ZAxis=rawAccel.ZAxis/16384;
-    accel_fit(&rawAccel.ZAxis,Zeros,2);
-    
-    // rawGyro.XAxis=rawGyro.XAxis/131;
-    // rawGyro.YAxis=rawGyro.YAxis/131;
-    // rawGyro.ZAxis=rawGyro.ZAxis/131;
-}
 
 
 
 
 
 void clearAll()
-{
-  AcX[1]=0;
-  AcY[1]=0;
-  AcZ[1]=0;
-  GyX[1]=0;
-  GyY[1]=0;
-  GyZ[1]=0;
-  Vx[1]=0;
-  Vy[1]=0;
-  Vz[1]=0;
-  AcX[0]=0;
-  AcY[0]=0;
-  AcZ[0]=0;
-  GyX[0]=0;
-  GyY[0]=0;
-  GyZ[0]=0;
-  Vx[0]=0;
-  Vy[0]=0;
-  Vz[0]=0;
-  Dx=0;
-  Dy=0;
-  Dz=0;
+{  
   //carHandling.SetSteering(90);
   counterAB=0;
   counterAB2=0;
-
-}
-void setZero(float *Zeros, VectorFloat rawAccel)
-{
-  
-  Zeros[0] = rawAccel.XAxis;
-  Zeros[1] = rawAccel.YAxis;
-  Zeros[2] = rawAccel.ZAxis;
 
 }
 
@@ -460,28 +333,22 @@ void setup() {
   //carHandling.StopAll();
   motorPID1.SetOutputLimits(MIN_PWM, 1000000);
   motorPID2.SetOutputLimits(MIN_PWM, 1000000);
-  motorPID1.SetMode(AUTOMATIC);
- 
+  motorPID1.SetMode(AUTOMATIC); 
   motorPID2.SetMode(AUTOMATIC);
+
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   attachInterrupt(digitalPinToInterrupt(32), ai2, CHANGE);
   attachInterrupt(digitalPinToInterrupt(33), ai3, CHANGE);
+
   Serial.begin(9600);
   carHandling.SetSteeringMotor(25);
   velocidadeSetpoint1=0;
   velocidadeSetpoint2=0;
+
   carHandling.SetTractionMotor(IN1,IN2,IN3,IN4);
   carHandling.SetSteering(90);
-  while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
-  {
-    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
-    delay(500);
-  }
-  setupKalman();
-  mpu.setGyroOffsetX(84);
-  mpu.setGyroOffsetY(50);
-  mpu.setGyroOffsetZ(84);
+  
  
   serialBT.begin("ESP32");
   serialSendInterval = millis();
@@ -548,9 +415,7 @@ void loop() {
       velocidadeSetpoint1 = round(((double(velSet)/1000))*(520/(0.033*2*PI)));
       velocidadeSetpointToSend = ((double(velSet)/1000));
       velocidadeSetpoint2 = velocidadeSetpoint1;
-      // velocidadeSetpoint1 = ((double(velSet)/1000));
-      // velocidadeSetpointToSend = ((double(velSet)/1000));
-      // velocidadeSetpoint2 = velocidadeSetpoint1;
+ 
       
       clearAll();
      
@@ -576,9 +441,7 @@ void loop() {
       velocidadeSetpoint1 = round(((double(velSet1)))*(520/(0.033*2*PI)));
       velocidadeSetpointToSend = ((double(velLinear)));
       velocidadeSetpoint2 = round(((double(velSet2)))*(520/(0.033*2*PI)));
-      // velocidadeSetpoint1 = ((double(velSet)/1000));
-      // velocidadeSetpointToSend = ((double(velSet)/1000));
-      // velocidadeSetpoint2 = velocidadeSetpoint1;
+     
       
       clearAll();
      
@@ -611,78 +474,15 @@ void loop() {
   {
     timeTrajectory=micros();
     velocidadeSetpoint1=0;
-    velocidadeSetpoint2 = 0;
-    canRun=false;
- 
-    
+    velocidadeSetpoint2=0;
+    canRun=false;    
   }
   
   if (micros()-currentTime>=T*TSAMPLE)
   {  
-    // if(canRun)
-    // {
-      
-    //   stepCount++;
     
-      
     
-      
-    //   if (stepCount>=5/T)
-    //   {
-    //     //carHandling.StopAll();
-    //     canRun=false;
-    //     stepCount=0;
-        
-        
-    //   }
-      
-      
-    // }
-   
-    rawAccel=mpu.readRawAccel();
-    rawGyro=mpu.readNormalizeGyro();
 
-    currentTime=micros();
-
-    fitData();    
-    ang_accelXZ = atan2(rawAccel.XAxis, rawAccel.ZAxis)*180/PI;
-    vang_gyroY=rawGyro.YAxis;
-    ang_accelYZ = atan2(rawAccel.YAxis , rawAccel.ZAxis)*180/PI;
-    vang_gyroX=rawGyro.XAxis;
-    ang_accelXY = atan2(rawAccel.XAxis, rawAccel.YAxis )*180/PI;
-    vang_gyroZ=rawGyro.ZAxis;   
-     
-    // Aplica o filtro de Kalman
-    ang_kalmanXZ = FiltroKalmanXZ.getAngle(ang_accelXZ,vang_gyroY,T);
-    ang_kalmanYZ = FiltroKalmanYZ.getAngle(ang_accelYZ,vang_gyroX,T);
-    ang_kalmanXY = FiltroKalmanXY.getAngle(ang_accelXY,vang_gyroZ,T);
-  
-   
-    AcX[1]*=9.80665;
-    AcY[1]*=9.80665;
-    AcY[1]=LPFilterAlternativeFirst(AcY[1],1);
-    AcX[1]=LPFilterAlternativeFirst(AcX[1],1);
-    AcY[1]=rawAccel.YAxis- sin(ang_kalmanYZ*PI/180);
-    AcX[1]= rawAccel.XAxis - sin(ang_kalmanXZ*PI/180);
-    //float avgVY= movingAvgFilter(AcY[1]);
-    velocity((AcY),&Vy[1],&countY, T, canRun);
-    velocity((AcX), &Vx[1],&countX, T, canRun);
-    displacement(Vy,&Dy, T, dir);
-    if (vang_gyroZ>0)
-    {
-      displacement(Vx,&Dx, T, true);
-    }
-    else   displacement(Vx,&Dx, T, false);
-    
-    
-    // Serial.print(Output1);Serial.print(",");
-    // Serial.print(Output2);Serial.print(",");
-    // Serial.print(DeltaEncoder);Serial.print(",");
-    // Serial.print(velocidadeSetpoint1);Serial.print(",");
-    // Serial.print(velocidadeSetpoint2);Serial.print(",");
-    // Serial.print(Input1);Serial.print(",");
-    // Serial.println(Input2);
-    
     // Serial.println(DeltaEncoder);
     // Serial.print(ang_kalmanYZ);Serial.print(",");
     // Serial.println(ang_kalmanXZ);
@@ -716,8 +516,7 @@ void loop() {
     else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
     {
       velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
-      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
-    
+      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;  
     
     }
   }
@@ -731,8 +530,7 @@ void loop() {
     detachInterrupt(25);
     detachInterrupt(33);
     
-    // Input1 = ((2*PI*0.033*counterAB/52));
-    // Input2 = ((2*PI*0.033*counterAB2/52));
+   
 
     Input1 = ((counterAB*10));
     Input2 = ((counterAB2*10));
