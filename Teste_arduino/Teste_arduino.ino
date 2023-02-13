@@ -1,4 +1,14 @@
 
+#include <Arduino.h>
+#include <ESP32Servo.h>
+#include <math.h>
+#include "Decode.h"
+#include <BluetoothSerial.h>
+#include "CarHandling.h"
+#include <PID_v1.h>
+
+
+CarHandling carHandling;
 
 //motor_A
 int IN1 = 4 ;
@@ -21,10 +31,12 @@ int erro1=0;
 int erro2=0;
 int sc1 = 0;
 int sc2 = 0;
-int ref_PS = 2157;
+int ref_PSA = 2157;
+int ref_PSB = 2157;
 float KPA = 1.5;
 float KPB = KPA;
 bool run1 = true;
+double DeltaEncoder;
 void ai0() {
 
  
@@ -132,46 +144,54 @@ void ai3() {
  
 void setup() {
 
+  carHandling.SetSteeringMotor(25);
+  carHandling.SetTractionMotor(IN1,IN2,IN3,IN4);
+  carHandling.SetSteering(90);
   attachInterrupt(digitalPinToInterrupt(34), ai0, CHANGE);
   attachInterrupt(digitalPinToInterrupt(35), ai1, CHANGE);
   attachInterrupt(digitalPinToInterrupt(32), ai2, CHANGE);
   attachInterrupt(digitalPinToInterrupt(33), ai3, CHANGE);
-  pinMode(IN1,OUTPUT);
+  /*pinMode(IN1,OUTPUT);
   pinMode(IN2,OUTPUT);
   pinMode(IN3,OUTPUT);
-  pinMode(IN4,OUTPUT);
+  pinMode(IN4,OUTPUT);*/
   pinMode(dir, OUTPUT);
   timeRead=micros();
   timeTrajectory=micros();
   Serial.begin(9600);
 
-   vel_PS_A = (int)((ref_PS+273.33)/33.80);
-   vel_PS_B = (int)((ref_PS+269.73)/33.72);
+   vel_PS_A = (int)((ref_PSA+273.33)/33.80);
+   vel_PS_B = (int)((ref_PSB+269.73)/33.72);
 
-   analogWrite(IN1,vel_PS_A);
+   carHandling.Move1(vel_PS_A);  
+   carHandling.Move2(vel_PS_B);
+   /*analogWrite(IN1,vel_PS_A);
    analogWrite(IN3,vel_PS_B);
    analogWrite(IN2,0);
-   analogWrite(IN4,0);
+   analogWrite(IN4,0);*/
 }
 void loop() {
  
   digitalWrite(dir,LOW);
   if(micros()-timeTrajectory>2000000)
   {
-    ref_PS=0;
+    ref_PSA=0;
+    ref_PSB = 0;
     run1=false;
-    analogWrite(IN1,0);
-   analogWrite(IN3,0);
+    carHandling.Move1(0);  
+    carHandling.Move2(0);
+    /*analogWrite(IN1,0);
+    analogWrite(IN3,0);*/
     timeTrajectory=micros();
   }
   if(micros()-timeRead>=100000)
   {
-    Serial.println(erro1);
-    Serial.println(erro2);
-    //Serial.println(counterAB1*10);
-    //Serial.println(counterAB2*10);
-    erro1=(ref_PS-(counterAB1*10));
-    erro2=(ref_PS-(counterAB2*10));
+    //Serial.println(erro1);
+    //Serial.println(erro2);
+    Serial.println(counterAB1*10);
+    Serial.println(counterAB2*10);
+    erro1=(ref_PSA-(counterAB1*10));
+    erro2=(ref_PSB-(counterAB2*10));
     counterAB1 = 0;
     counterAB2 = 0;
     timeRead=micros();
@@ -182,14 +202,16 @@ void loop() {
     sc1 = (int)(((erro1*1.5)+273.33)/33.80);
     if (sc1 > 255) sc1 = 255;
     if (sc1 < 0) sc1 = 0;
-    analogWrite(IN1,sc1);
+    carHandling.Move1(sc1);  
+    //analogWrite(IN1,sc1);
   }
   if(erro1<0)
   {
     sc1 = sc1 - (int)(((erro1*1.5)+273.33)/33.80);
     if (sc1 > 255) sc1 = 255;
     if (sc1 < 0) sc1 = 0;
-    analogWrite(IN1,sc1);
+    carHandling.Move1(sc1);  
+    //analogWrite(IN1,sc1);
   }
   
   if(erro2>0)
@@ -197,7 +219,9 @@ void loop() {
     sc2 = (int)(((erro2*1.5)+269.73)/33.72);
     if (sc2 > 255) sc2 = 255;
     if (sc2 < 0) sc2 = 0;
-    analogWrite(IN3,sc2);
+      
+    carHandling.Move2(sc2);
+    //analogWrite(IN3,sc2);
   }
   if(erro2<0)
   {
@@ -205,8 +229,22 @@ void loop() {
     sc2 = sc2 - (int)(((erro2*1.5)+269.73)/33.72);
     if (sc2 > 255) sc2 = 255;
     if (sc2 < 0) sc2 = 0;
-    analogWrite(IN3,sc2);
+    carHandling.Move2(sc2);
+    //analogWrite(IN3,sc2);
       
   }}
+
+  if (DeltaEncoder>=0 && ref_PSA!=0)
+  {
+    ref_PSA = ref_PSA - (DeltaEncoder)*0.0001;
+    ref_PSB = ref_PSB + (DeltaEncoder)*0.0001;
+    
+  }
+  else if (DeltaEncoder<0 && ref_PSA!=0) 
+  {
+    ref_PSA = ref_PSA  + (abs(DeltaEncoder))*0.0001;
+    ref_PSB = ref_PSB + (DeltaEncoder)*0.0001;  
+  
+  }
   
 }

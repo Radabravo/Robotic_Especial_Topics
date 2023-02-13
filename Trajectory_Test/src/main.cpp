@@ -19,8 +19,8 @@ String command[3];
 // Constantes do Controle PID
 #define MIN_PWM 0
 #define MAX_PWM 255
-#define KP 3
-#define KI 2
+#define KP 1.1
+#define KI 0.9
 #define KD 0.001
 #define WB 0.145 // wheel base
 
@@ -301,25 +301,16 @@ int convertVelToPwm(double vel, int motor)
   
   if (motor==1) // Motor esquerdo 
   {
-    pwm = (int)((vel+1366.7)/169);
+    pwm = (int)((vel+273.33)/33.80);
   }
   else if (motor == 2) // Motor Direito
   {
-    pwm = (int)((vel+1348.7)/168.6);
-  }
-
-
-  //int pwm = (int)((vel+0.2333)/0.0130);
-  
-  
-  
-  // int pwm = (int)((vel+2917)/163);
-  
+    pwm = (int)((vel+269.73)/33.72);
+  }  
   if (pwm<0)
   {
     pwm=0;
   }
-  
   
   
   return pwm;
@@ -505,21 +496,21 @@ void loop() {
   carHandling.Move2(convertVelToPwm (Output2,2));
  
     
-  if (command[2]=="l")
-  {
-    if (DeltaEncoder>=0 && velocidadeSetpoint1!=0)
-    {
-      velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.0001;
-      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
+  // if (command[2]=="l")
+  // {
+  //   if (DeltaEncoder>=0 && velocidadeSetpoint1!=0)
+  //   {
+  //     velocidadeSetpoint1 = velocidadeSetpoint1 - (DeltaEncoder)*0.0001;
+  //     velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;
       
-    }
-    else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
-    {
-      velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
-      velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;  
+  //   }
+  //   else if (DeltaEncoder<0 && velocidadeSetpoint1!=0) 
+  //   {
+  //     velocidadeSetpoint1 = velocidadeSetpoint1 + (abs(DeltaEncoder))*0.0001;
+  //     velocidadeSetpoint2 = velocidadeSetpoint2 + (DeltaEncoder)*0.0001;  
     
-    }
-  }
+  //   }
+  // }
   
  
 
